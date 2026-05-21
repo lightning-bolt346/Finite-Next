@@ -1,0 +1,2329 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Finite</title>
+    <style>
+        :root {
+            --bg: #08090d;
+            --surface: #101119;
+            --card: rgba(255, 255, 255, .06);
+            --card2: rgba(255, 255, 255, .095);
+            --border: rgba(255, 255, 255, .12);
+            --border2: rgba(255, 255, 255, .22);
+            --text: #f5f5f7;
+            --sub: #a1a1aa;
+            --muted: #71717a;
+            --accent: #a78bfa;
+            --accent2: #38bdf8;
+            --accent3: #34d399;
+            --danger: #fb7185;
+            --warn: #fbbf24;
+            --shadow: rgba(0, 0, 0, .42);
+            --noise: .04;
+            --mono: "SF Mono", "Cascadia Code", "Roboto Mono", Consolas, monospace;
+            --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif
+        }
+
+        [data-theme=solar] {
+            --bg: #0d0906;
+            --surface: #17100b;
+            --accent: #f59e0b;
+            --accent2: #fb7185;
+            --accent3: #fbbf24;
+            --card: rgba(255, 245, 225, .065);
+            --border: rgba(255, 220, 170, .14)
+        }
+
+        [data-theme=forest] {
+            --bg: #060d0a;
+            --surface: #0b1712;
+            --accent: #34d399;
+            --accent2: #22d3ee;
+            --accent3: #84cc16;
+            --card: rgba(230, 255, 242, .06);
+            --border: rgba(170, 255, 210, .14)
+        }
+
+        [data-theme=light] {
+            --bg: #f7f5f0;
+            --surface: #fff;
+            --card: rgba(255, 255, 255, .78);
+            --card2: rgba(255, 255, 255, .96);
+            --border: rgba(20, 20, 25, .13);
+            --border2: rgba(20, 20, 25, .24);
+            --text: #101014;
+            --sub: #4f4f59;
+            --muted: #71717a;
+            --accent: #7c3aed;
+            --accent2: #0284c7;
+            --accent3: #059669;
+            --shadow: rgba(35, 35, 45, .13);
+            --noise: .025
+        }
+
+        [data-theme=mono] {
+            --bg: #050505;
+            --surface: #101010;
+            --accent: #f5f5f5;
+            --accent2: #a3a3a3;
+            --accent3: #d4d4d4;
+            --card: rgba(255, 255, 255, .055);
+            --border: rgba(255, 255, 255, .13)
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        html {
+            scroll-behavior: smooth
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            overflow-x: hidden
+        }
+
+        body:before,
+        body:after {
+            content: "";
+            position: fixed;
+            width: 560px;
+            height: 560px;
+            border-radius: 50%;
+            filter: blur(90px);
+            opacity: .25;
+            pointer-events: none;
+            z-index: -3
+        }
+
+        body:before {
+            left: -180px;
+            top: -180px;
+            background: radial-gradient(circle, var(--accent), transparent 65%)
+        }
+
+        body:after {
+            right: -180px;
+            bottom: -200px;
+            background: radial-gradient(circle, var(--accent2), transparent 65%)
+        }
+
+        .noise {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: -2;
+            opacity: var(--noise);
+            background-image: radial-gradient(circle at 1px 1px, var(--text) 1px, transparent 0);
+            background-size: 24px 24px
+        }
+
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: color-mix(in srgb, var(--accent) 70%, var(--border)) color-mix(in srgb, var(--surface) 88%, transparent)
+        }
+
+        ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px
+        }
+
+        ::-webkit-scrollbar-track {
+            background: color-mix(in srgb, var(--surface) 88%, transparent)
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, var(--accent), var(--accent2));
+            border: 3px solid var(--bg);
+            border-radius: 999px
+        }
+
+        .shell {
+            width: min(1180px, calc(100% - 36px));
+            margin: auto
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 60;
+            backdrop-filter: blur(22px);
+            background: color-mix(in srgb, var(--bg) 78%, transparent);
+            border-bottom: 1px solid var(--border)
+        }
+
+        .nav {
+            min-height: 72px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            font-weight: 800;
+            letter-spacing: -.035em;
+            font-size: 19px
+        }
+
+        .logo {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 32% 28%, #fff, var(--accent) 25%, var(--accent2) 72%);
+            box-shadow: 0 0 30px color-mix(in srgb, var(--accent) 60%, transparent);
+            position: relative
+        }
+
+        .logo:after {
+            content: "";
+            position: absolute;
+            inset: 8px;
+            border-radius: 50%;
+            background: var(--bg);
+            opacity: .62
+        }
+
+        nav {
+            display: flex;
+            gap: 6px
+        }
+
+        .nav a,
+        .icon-btn,
+        button {
+            font: inherit;
+            color: var(--sub);
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 999px;
+            padding: 9px 12px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background .2s, border-color .2s, color .2s, transform .2s
+        }
+
+        .nav a:hover,
+        .icon-btn:hover {
+            color: var(--text);
+            background: var(--card);
+            border-color: var(--border)
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            align-items: center
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 43px;
+            padding: 11px 16px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            background: var(--card);
+            color: var(--text);
+            box-shadow: 0 14px 34px var(--shadow)
+        }
+
+        .btn.primary {
+            border: 0;
+            color: #fff;
+            font-weight: 750;
+            background: linear-gradient(135deg, var(--accent), var(--accent2))
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            border-color: var(--border2)
+        }
+
+        .hero {
+            padding: 70px 0 34px;
+            display: grid;
+            grid-template-columns: 1.05fr .95fr;
+            gap: 28px;
+            align-items: center
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            width: max-content;
+            max-width: 100%;
+            padding: 7px 11px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            color: var(--sub);
+            background: var(--card);
+            font-size: 13px
+        }
+
+        .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--accent3);
+            box-shadow: 0 0 16px var(--accent3)
+        }
+
+        h1 {
+            font-size: clamp(48px, 8vw, 92px);
+            line-height: .94;
+            margin: 18px 0;
+            letter-spacing: -.075em
+        }
+
+        h2 {
+            font-size: clamp(26px, 4vw, 42px);
+            letter-spacing: -.055em;
+            margin: 0
+        }
+
+        h3 {
+            margin: 0;
+            letter-spacing: -.035em
+        }
+
+        p {
+            color: var(--sub);
+            line-height: 1.65
+        }
+
+        .sub {
+            max-width: 650px;
+            font-size: 18px
+        }
+
+        .hero-actions,
+        .export-row,
+        .focus-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap
+        }
+
+        .card {
+            background: linear-gradient(180deg, var(--card2), var(--card));
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            box-shadow: 0 18px 50px var(--shadow);
+            backdrop-filter: blur(20px);
+            transition: border-color .22s, background .22s
+        }
+
+        .card:hover {
+            border-color: var(--border2)
+        }
+
+        .panel,
+        .setup-card,
+        .quote-card {
+            padding: 22px
+        }
+
+        .form-grid {
+            display: grid;
+            gap: 14px;
+            margin-top: 18px
+        }
+
+        .goal-extra {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px
+        }
+
+        label {
+            display: grid;
+            gap: 7px;
+            color: var(--sub);
+            font-size: 13px
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            border: 1px solid var(--border);
+            background: color-mix(in srgb, var(--surface) 82%, transparent);
+            color: var(--text);
+            border-radius: 14px;
+            padding: 12px 13px;
+            outline: none;
+            font: inherit;
+            transition: border-color .2s, box-shadow .2s, background .2s
+        }
+
+        option {
+            background: var(--surface);
+            color: var(--text)
+        }
+
+        [data-theme=light] input,
+        [data-theme=light] select,
+        [data-theme=light] textarea {
+            background: rgba(255, 255, 255, .9);
+            color: #101014
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: color-mix(in srgb, var(--accent) 70%, var(--border));
+            box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 16%, transparent)
+        }
+
+        textarea {
+            min-height: 130px;
+            resize: vertical
+        }
+
+        .dashboard,
+        .section {
+            padding: 34px 0
+        }
+
+        .greeting {
+            margin: 18px 0 0
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 16px
+        }
+
+        .stat {
+            grid-column: span 4;
+            padding: 22px;
+            min-height: 210px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between
+        }
+
+        .label-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: flex-start;
+            color: var(--sub);
+            font-size: 13px
+        }
+
+        .metric {
+            font-family: var(--mono);
+            font-size: clamp(30px, 4vw, 48px);
+            letter-spacing: -.065em;
+            margin: 16px 0 6px;
+            white-space: nowrap
+        }
+
+        .metric.small {
+            font-size: clamp(24px, 3vw, 38px)
+        }
+
+        .meta,
+        .tiny {
+            color: var(--muted);
+            font-size: 13px
+        }
+
+        .bar {
+            height: 8px;
+            background: color-mix(in srgb, var(--surface) 72%, transparent);
+            border-radius: 99px;
+            overflow: hidden;
+            margin: 16px 0 8px;
+            border: 1px solid var(--border)
+        }
+
+        .fill {
+            height: 100%;
+            width: 0%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            transition: width .7s cubic-bezier(.2, .8, .2, 1)
+        }
+
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: end;
+            gap: 18px;
+            margin-bottom: 18px
+        }
+
+        .section-head p {
+            margin: .35rem 0 0
+        }
+
+        .weeks-card {
+            padding: 22px;
+            overflow: hidden
+        }
+
+        .legend {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            color: var(--sub);
+            font-size: 13px;
+            margin: 16px 0
+        }
+
+        .legend span {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px
+        }
+
+        .swatch {
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+            border: 1px solid var(--border)
+        }
+
+        .swatch.lived {
+            background: linear-gradient(135deg, var(--accent), var(--accent2))
+        }
+
+        .swatch.current {
+            background: color-mix(in srgb, var(--accent3) 22%, transparent);
+            box-shadow: 0 0 0 2px var(--accent3)
+        }
+
+        .week-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(7px, 1fr));
+            gap: 3px;
+            max-height: 300px;
+            overflow: hidden;
+            transition: max-height .4s ease;
+            padding: 2px
+        }
+
+        .week-grid.expanded {
+            max-height: 1700px
+        }
+
+        .week {
+            aspect-ratio: 1;
+            min-width: 6px;
+            border-radius: 2px;
+            background: color-mix(in srgb, var(--surface) 88%, var(--text) 8%);
+            border: 1px solid color-mix(in srgb, var(--text) 18%, transparent)
+        }
+
+        .week.lived {
+            border: 0;
+            background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 72%, #111), color-mix(in srgb, var(--accent2) 62%, #111));
+            opacity: .75
+        }
+
+        .week.current {
+            border: 1px solid var(--accent3);
+            background: color-mix(in srgb, var(--accent3) 20%, transparent);
+            box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent3) 45%, transparent), 0 0 12px color-mix(in srgb, var(--accent3) 45%, transparent)
+        }
+
+        .goal-layout {
+            display: grid;
+            grid-template-columns: .82fr 1.18fr;
+            gap: 16px
+        }
+
+        .goal-list {
+            display: grid;
+            gap: 12px
+        }
+
+        .goal-card {
+            padding: 16px;
+            display: grid;
+            gap: 10px;
+            cursor: pointer
+        }
+
+        .goal-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            border: 1px solid var(--border);
+            color: var(--sub);
+            border-radius: 999px;
+            padding: 4px 8px;
+            font-size: 12px
+        }
+
+        .delete {
+            color: var(--danger);
+            padding: 7px 9px;
+            border-radius: 10px
+        }
+
+        .empty {
+            color: var(--muted);
+            border: 1px dashed var(--border);
+            border-radius: 18px;
+            padding: 24px;
+            text-align: center
+        }
+
+        .quote-text {
+            font-size: clamp(20px, 3vw, 32px);
+            line-height: 1.28;
+            letter-spacing: -.04em;
+            color: var(--text);
+            margin: 0
+        }
+
+        .quote-source {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap
+        }
+
+        .settings-modal,
+        .focus-overlay,
+        .goal-modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            place-items: center;
+            background: rgba(0, 0, 0, .56);
+            z-index: 100;
+            padding: 18px;
+            backdrop-filter: blur(12px)
+        }
+
+        .settings-modal.open,
+        .focus-overlay.open,
+        .goal-modal.open {
+            display: grid
+        }
+
+        .modal-card,
+        .goal-detail {
+            width: min(900px, 100%);
+            padding: 24px;
+            max-height: 90vh;
+            overflow: auto
+        }
+
+        .modal-card {
+            width: min(620px, 100%)
+        }
+
+        .modal-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 18px
+        }
+
+        .danger-zone {
+            margin-top: 18px;
+            padding-top: 18px;
+            border-top: 1px solid var(--border)
+        }
+
+        .danger-btn {
+            color: #fff;
+            background: linear-gradient(135deg, #ef4444, var(--danger));
+            border: 0
+        }
+
+        .focus-overlay {
+            z-index: 120;
+            background: radial-gradient(circle at 20% 0%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 38%), color-mix(in srgb, var(--bg) 92%, black)
+        }
+
+        .focus-card {
+            width: min(780px, 100%);
+            text-align: center;
+            padding: 42px
+        }
+
+        .focus-timer {
+            font-family: var(--mono);
+            font-size: clamp(52px, 13vw, 124px);
+            letter-spacing: -.08em;
+            margin: 18px 0
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: .9fr 1.1fr;
+            gap: 16px;
+            margin-top: 18px
+        }
+
+        .urgency-panel {
+            padding: 18px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: color-mix(in srgb, var(--surface) 78%, transparent)
+        }
+
+        .unit-switch {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 12px 0
+        }
+
+        .unit-switch button {
+            border: 1px solid var(--border);
+            background: var(--card);
+            border-radius: 999px
+        }
+
+        .unit-switch button.active {
+            color: #fff;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border: 0
+        }
+
+        .urgency-number {
+            font-family: var(--mono);
+            font-size: clamp(42px, 9vw, 92px);
+            letter-spacing: -.08em;
+            line-height: 1;
+            margin: 14px 0
+        }
+
+        .micro-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(9px, 1fr));
+            gap: 4px;
+            max-height: 180px;
+            overflow: hidden;
+            margin-top: 12px
+        }
+
+        .micro-cell {
+            aspect-ratio: 1;
+            border-radius: 3px;
+            background: color-mix(in srgb, var(--surface) 84%, var(--text) 8%);
+            border: 1px solid color-mix(in srgb, var(--text) 16%, transparent)
+        }
+
+        .micro-cell.hot {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border: 0
+        }
+
+        .step-list {
+            display: grid;
+            gap: 10px
+        }
+
+        .step-item {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            background: var(--card)
+        }
+
+        .step-check {
+            width: 18px;
+            height: 18px;
+            margin-top: 2px;
+            accent-color: var(--accent)
+        }
+
+        .adhd-strip {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 12px
+        }
+
+        .adhd-chip {
+            padding: 12px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            background: var(--card)
+        }
+
+        .adhd-chip strong {
+            display: block;
+            color: var(--text);
+            margin-bottom: 4px
+        }
+
+        .mobile-bottom {
+            display: none;
+            position: fixed;
+            left: 12px;
+            right: 12px;
+            bottom: 12px;
+            z-index: 80;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            background: color-mix(in srgb, var(--bg) 78%, transparent);
+            backdrop-filter: blur(22px);
+            box-shadow: 0 18px 50px var(--shadow)
+        }
+
+        .mobile-bottom a,
+        .mobile-bottom button {
+            flex: 1;
+            text-align: center;
+            padding: 10px 8px;
+            border-radius: 15px;
+            color: var(--sub);
+            text-decoration: none;
+            font-size: 12px;
+            border: 0;
+            background: transparent
+        }
+
+        footer {
+            padding: 42px 0 56px;
+            color: var(--muted);
+            text-align: center
+        }
+
+        @media(max-width:860px) {
+            .hero {
+                grid-template-columns: 1fr;
+                padding-top: 42px
+            }
+
+            nav {
+                display: none
+            }
+
+            .stat {
+                grid-column: span 12
+            }
+
+            .goal-layout,
+            .detail-grid {
+                grid-template-columns: 1fr
+            }
+
+            .section-head {
+                align-items: start;
+                flex-direction: column
+            }
+
+            .hero-actions .btn,
+            .export-row .btn {
+                flex: 1
+            }
+
+            .goal-extra,
+            .adhd-strip {
+                grid-template-columns: 1fr
+            }
+        }
+
+        @media(max-width:700px) {
+            body {
+                padding-bottom: 78px
+            }
+
+            .mobile-bottom {
+                display: flex
+            }
+        }
+
+        @media(max-width:520px) {
+            .shell {
+                width: min(100% - 24px, 1180px)
+            }
+
+            .metric {
+                font-size: 32px
+            }
+
+            .week-grid {
+                grid-template-columns: repeat(auto-fill, minmax(6px, 1fr));
+                gap: 2px
+            }
+
+            .actions .icon-btn:first-child {
+                display: none
+            }
+        }
+
+        @media(prefers-reduced-motion:reduce) {
+            * {
+                scroll-behavior: auto !important;
+                transition: none !important;
+                animation: none !important
+            }
+        }
+
+        .page {
+            display: none;
+            padding: 34px 0
+        }
+
+        .page.active {
+            display: block
+        }
+
+        .nav a.active,
+        .mobile-bottom a.active {
+            color: var(--text);
+            background: var(--card);
+            border-color: var(--border)
+        }
+
+        .full-card {
+            grid-column: 1/-1;
+            padding: 22px
+        }
+
+        .stack {
+            display: grid;
+            gap: 18px;
+            margin-top: 22px
+        }
+
+        .command-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px
+        }
+
+        .cmd-card {
+            min-width: 0;
+            overflow: hidden;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            justify-content: space-between
+        }
+
+        .cmd-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px
+        }
+
+        .cmd-title {
+            font-size: 13px;
+            color: var(--muted);
+            font-weight: 800
+        }
+
+        .cmd-pill {
+            font-size: 12px;
+            color: var(--muted);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 5px 9px;
+            white-space: nowrap
+        }
+
+        .cmd-value {
+            font-family: var(--mono);
+            font-size: clamp(28px, 3vw, 46px);
+            line-height: 1.03;
+            letter-spacing: -.05em;
+            color: var(--text);
+            overflow-wrap: anywhere
+        }
+
+        .cmd-value.text {
+            font-family: inherit;
+            font-size: clamp(24px, 2.3vw, 34px);
+            line-height: 1.08;
+            letter-spacing: -.035em;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden
+        }
+
+        .cmd-meta {
+            min-height: 38px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden
+        }
+
+        .today-goal-home {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 16px;
+            align-items: center
+        }
+
+        .quick-row,
+        .quote-actions,
+        .home-reflect-actions,
+        .goal-filters,
+        .rollover-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap
+        }
+
+        .rollover-card {
+            border: 1px solid color-mix(in srgb, var(--warn) 35%, var(--border));
+            background: linear-gradient(180deg, color-mix(in srgb, var(--warn) 8%, var(--card2)), var(--card))
+        }
+
+        .rollover-list {
+            display: grid;
+            gap: 10px;
+            margin-top: 12px
+        }
+
+        .rollover-item {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            background: var(--card)
+        }
+
+        .reflection-beauty {
+            position: relative;
+            overflow: hidden
+        }
+
+        .reflection-beauty:before {
+            content: '';
+            position: absolute;
+            inset: -80px auto auto -80px;
+            width: 220px;
+            height: 220px;
+            background: radial-gradient(circle, color-mix(in srgb, var(--accent2) 24%, transparent), transparent 66%);
+            pointer-events: none
+        }
+
+        .prompt-card {
+            position: relative;
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, var(--card)), var(--card));
+            margin: 12px 0 14px
+        }
+
+        .prompt-card strong {
+            display: block;
+            color: var(--text);
+            font-size: 20px;
+            line-height: 1.3
+        }
+
+        .reflect-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap
+        }
+
+        .today-grid {
+            display: grid;
+            grid-template-columns: .82fr 1.18fr;
+            gap: 16px
+        }
+
+        .calendar-card {
+            padding: 22px
+        }
+
+        .visual-timeline {
+            position: relative;
+            height: 1440px;
+            max-height: 780px;
+            overflow: auto;
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 90%, transparent), color-mix(in srgb, var(--surface) 72%, transparent))
+        }
+
+        .timeline-hour {
+            height: 60px;
+            border-bottom: 1px solid var(--border);
+            display: grid;
+            grid-template-columns: 72px 1fr;
+            gap: 10px
+        }
+
+        .timeline-hour .time-label {
+            font-family: var(--mono);
+            color: var(--muted);
+            font-size: 12px;
+            padding: 8px 0 0 12px
+        }
+
+        .timeline-lane {
+            position: absolute;
+            left: 84px;
+            right: 14px;
+            top: 0;
+            height: 1440px
+        }
+
+        .now-line {
+            position: absolute;
+            left: 78px;
+            right: 10px;
+            height: 2px;
+            background: var(--accent3);
+            box-shadow: 0 0 18px color-mix(in srgb, var(--accent3) 75%, transparent);
+            z-index: 5
+        }
+
+        .event-block {
+            position: absolute;
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--accent2);
+            border-radius: 14px;
+            background: linear-gradient(135deg, var(--card2), var(--card));
+            padding: 8px 10px;
+            overflow: hidden;
+            min-height: 34px;
+            box-shadow: var(--shadow);
+            z-index: 3
+        }
+
+        .event-block.deadline {
+            border-left-color: var(--danger)
+        }
+
+        .event-block.routine {
+            border-left-color: var(--accent)
+        }
+
+        .event-block.break {
+            border-left-color: var(--accent3)
+        }
+
+        .event-block strong {
+            display: block;
+            color: var(--text);
+            font-size: 13px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .event-block .tiny {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .event-block button {
+            margin-top: 4px;
+            padding: 2px 7px;
+            border-radius: 9px;
+            color: var(--danger);
+            font-size: 11px
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px
+        }
+
+        .mini-kpi {
+            padding: 14px;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            background: var(--card)
+        }
+
+        .mini-kpi strong {
+            display: block;
+            font-family: var(--mono);
+            font-size: 24px;
+            color: var(--text);
+            letter-spacing: -.04em
+        }
+
+        .today-goal-box {
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: var(--card);
+            margin-top: 14px
+        }
+
+        .progress-ring {
+            width: 116px;
+            height: 116px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: conic-gradient(var(--accent) var(--p, 0%), color-mix(in srgb, var(--surface) 75%, transparent) 0);
+            margin: auto
+        }
+
+        .progress-ring span {
+            width: 82px;
+            height: 82px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: var(--surface);
+            font-family: var(--mono);
+            font-weight: 800
+        }
+
+        .filter-btn.active {
+            color: #fff;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border: 0
+        }
+
+        .checklist {
+            display: grid;
+            gap: 8px;
+            margin-top: 10px
+        }
+
+        .check-item {
+            display: flex;
+            gap: 9px;
+            align-items: flex-start;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: var(--card)
+        }
+
+        .check-item input {
+            width: auto;
+            margin-top: 3px
+        }
+
+        .micro-cell.past {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            opacity: .62
+        }
+
+        .micro-cell.current {
+            background: var(--accent3);
+            box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent3) 45%, transparent);
+            transform: scale(1.1)
+        }
+
+        .micro-cell.deadline {
+            background: var(--warn);
+            box-shadow: 0 0 0 2px color-mix(in srgb, var(--warn) 35%, transparent)
+        }
+
+        .micro-note {
+            margin-top: 10px;
+            color: var(--muted);
+            font-family: var(--mono);
+            font-size: 12px
+        }
+
+        .quote-loading {
+            opacity: .72
+        }
+
+        .quote-loading:after {
+            content: ' ';
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            margin-left: 8px;
+            border: 2px solid var(--border2);
+            border-top-color: var(--accent2);
+            border-radius: 50%;
+            animation: spin .8s linear infinite
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        .saved-quotes-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px
+        }
+
+        .saved-quote {
+            position: relative;
+            overflow: hidden;
+            min-height: 220px;
+            padding: 22px
+        }
+
+        .saved-quote:before {
+            content: '“';
+            position: absolute;
+            right: 18px;
+            top: -20px;
+            font-size: 140px;
+            line-height: 1;
+            color: color-mix(in srgb, var(--accent2) 12%, transparent);
+            font-family: serif
+        }
+
+        .saved-quote blockquote {
+            position: relative;
+            margin: 0;
+            color: var(--text);
+            font-size: 20px;
+            line-height: 1.35
+        }
+
+        .saved-quote footer {
+            position: relative;
+            margin-top: 16px;
+            color: var(--muted)
+        }
+
+        .saved-quote-actions {
+            position: relative;
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+            flex-wrap: wrap
+        }
+
+        .reflection-history {
+            display: grid;
+            gap: 12px
+        }
+
+        .reflection-entry {
+            padding: 14px;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            background: var(--card)
+        }
+
+        .reflection-entry strong {
+            display: block;
+            color: var(--text);
+            margin-bottom: 6px
+        }
+
+        .sync-box {
+            margin-top: 18px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: var(--card)
+        }
+
+        .sync-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            align-items: end
+        }
+
+        .sync-row input {
+            width: 100%
+        }
+
+        .hidden {
+            display: none !important
+        }
+
+        input[type="date"],
+        input[type="time"] {
+            color-scheme: dark
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator,
+        input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: invert(1) brightness(1.7) contrast(1.15);
+            opacity: .9;
+            cursor: pointer
+        }
+
+        [data-theme=light] input[type="date"],
+        [data-theme=light] input[type="time"] {
+            color-scheme: light
+        }
+
+        [data-theme=light] input[type="date"]::-webkit-calendar-picker-indicator,
+        [data-theme=light] input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: none;
+            opacity: .75
+        }
+
+        @media(max-width:980px) {
+
+            .command-grid,
+            .saved-quotes-grid,
+            .today-grid,
+            .kpi-grid,
+            .today-goal-home,
+            .sync-row {
+                grid-template-columns: 1fr
+            }
+
+            .rollover-item {
+                grid-template-columns: 1fr
+            }
+
+            .timeline-hour {
+                grid-template-columns: 58px 1fr
+            }
+
+            .timeline-lane {
+                left: 68px
+            }
+
+            .now-line {
+                left: 62px
+            }
+
+            .cmd-value.text {
+                -webkit-line-clamp: 3
+            }
+
+            .full-card {
+                padding: 18px
+            }
+        }
+    </style>
+</head>
+
+<body data-theme="midnight">
+    <div class="noise"></div>
+    <header>
+        <div class="shell nav">
+            <div class="brand">
+                <div class="logo"></div><span>Finite</span>
+            </div>
+            <nav id="topNav"><a href="#dashboard" data-page-link="dashboard">Dashboard</a><a href="#today"
+                    data-page-link="today">Today</a><a href="#goals" data-page-link="goals">Goals</a><a
+                    href="#reflection" data-page-link="reflection">Reflect</a><a href="#quotes"
+                    data-page-link="quotes">Quotes</a></nav>
+            <div class="actions"><button class="icon-btn" id="quickTheme">Theme</button><button class="icon-btn"
+                    id="openFocus">Focus</button><button class="btn" id="openSettings">Settings</button></div>
+        </div>
+    </header>
+    <main class="shell">
+        <section class="hero page" id="setupPage" data-page="setup">
+            <div>
+                <div class="pill"><span class="dot"></span>Live · Private · Sync-ready</div>
+                <h1>Your time,<br>visualized.</h1>
+                <p class="sub">A local-first dashboard for life, today, goals, reflections, quotes, and optional cloud
+                    sync.</p>
+                <div class="hero-actions"><a class="btn primary" href="#setupCard">Set up your timeline</a><a
+                        class="btn" href="#dashboard">Explore dashboard</a></div>
+            </div>
+            <aside class="card setup-card" id="setupCard">
+                <h3>Create your timeline</h3>
+                <p>Your data stays in this browser unless you enable sync.</p>
+                <form class="form-grid" id="profileForm"><label>Display name<input id="displayName"
+                            placeholder="Satyam"></label><label>Date of birth<input id="birthDate" type="date"
+                            required></label><label>Expected lifespan<input id="lifespan" type="number" min="1"
+                            max="130" value="80" required></label><button class="btn primary" type="submit">Create my
+                        timeline</button></form>
+            </aside>
+        </section>
+        <section class="page" id="dashboard" data-page="dashboard">
+            <div class="section-head">
+                <div>
+                    <div class="pill">One week at a time</div>
+                    <h2 class="greeting" id="greeting">Here’s your timeline.</h2>
+                </div>
+                <div class="export-row"><button class="btn" id="exportDashboard">Export snapshot</button><button
+                        class="btn" id="copySummary">Copy summary</button></div>
+            </div>
+            <div class="grid" id="cards"></div>
+            <div class="stack">
+                <section class="card full-card">
+                    <div class="section-head">
+                        <div>
+                            <h2>Personal command center</h2>
+                            <p>What matters today, your next deadline, and the balance between outcomes and process.</p>
+                        </div>
+                    </div>
+                    <div class="command-grid">
+                        <article class="card cmd-card">
+                            <div>
+                                <div class="cmd-head"><span class="cmd-title">Today’s focus</span><span class="cmd-pill"
+                                        id="todayGoalStatus">—</span></div>
+                                <div class="cmd-value text" id="todayGoalDash">—</div>
+                                <p class="meta cmd-meta" id="todayGoalMeta">Set a goal on the Today page.</p>
+                            </div><a class="btn" href="#today">Open Today</a>
+                        </article>
+                        <article class="card cmd-card">
+                            <div>
+                                <div class="cmd-head"><span class="cmd-title">Next deadline</span><span
+                                        class="cmd-pill">Upcoming</span></div>
+                                <div class="cmd-value" id="nextDeadlineDash">—</div>
+                                <p class="meta cmd-meta" id="nextDeadlineMeta">No deadlines yet.</p>
+                            </div><a class="btn" href="#goals">Open Goals</a>
+                        </article>
+                        <article class="card cmd-card">
+                            <div>
+                                <div class="cmd-head"><span class="cmd-title">Goal balance</span><span
+                                        class="cmd-pill">Outcome / Process</span></div>
+                                <div class="cmd-value" id="goalBalanceDash">—</div>
+                                <p class="meta cmd-meta" id="goalBalanceMeta">Track both results and repeatable actions.
+                                </p>
+                            </div><a class="btn" href="#goals">Review</a>
+                        </article>
+                    </div>
+                </section>
+                <section class="card full-card" id="todayGoalHomeCard">
+                    <div class="today-goal-home">
+                        <div>
+                            <div class="pill"><span class="dot"></span>Today’s execution</div>
+                            <h2 id="homeTodayGoalTitle" style="margin-top:12px">No goal set for today.</h2>
+                            <p class="meta" id="homeTodayGoalMeta">Set one main goal and schedule blocks around it.</p>
+                        </div>
+                        <div class="quick-row"><button class="btn primary" id="homeCompleteTodayGoal">Mark
+                                done</button><a class="btn" href="#today">Plan today</a></div>
+                    </div>
+                </section>
+                <section class="card full-card rollover-card hidden" id="rolloverCard">
+                    <div class="section-head">
+                        <div>
+                            <h2>Unfinished from previous days</h2>
+                            <p>Smart rollover found unfinished daily goals. Move useful ones forward; archive stale
+                                ones.</p>
+                        </div><span class="tag" id="rolloverCount">0 pending</span>
+                    </div>
+                    <div class="rollover-list" id="rolloverList"></div>
+                </section>
+                <section class="card full-card weeks-card">
+                    <div class="section-head">
+                        <div>
+                            <h2>Life in weeks</h2>
+                            <p>Each square is one week. Filled squares are lived. Empty squares are still ahead.</p>
+                        </div><button class="btn" id="toggleWeeks">Expand grid</button>
+                    </div>
+                    <div class="legend"><span><i class="swatch lived"></i>Lived</span><span><i
+                                class="swatch current"></i>Current</span><span><i class="swatch"></i>Remaining</span>
+                    </div>
+                    <div class="week-grid" id="weekGrid"></div>
+                </section>
+                <section class="card full-card dashboard-reflection reflection-beauty">
+                    <div class="reflect-row">
+                        <div>
+                            <h2>Today’s reflection</h2>
+                            <p class="meta">One honest note for the day. Previous days stay read-only.</p>
+                        </div><span class="tag" id="homeTodayTag"></span>
+                    </div>
+                    <div class="prompt-card"><span class="tiny">Today’s prompt</span><strong id="homePromptText">What
+                            deserves your attention today?</strong></div><label>Your answer<textarea
+                            id="homeReflectionText" placeholder="One honest reflection for today..."></textarea></label>
+                    <div class="reflect-row" style="margin-top:12px">
+                        <div class="home-reflect-actions"><button class="btn primary" id="homeSaveReflection">Submit
+                                reflection</button><a class="btn" href="#reflection">View history</a></div><span
+                            class="meta" id="homeReflectionStatus">One reflection can be saved per day.</span>
+                    </div>
+                </section>
+                <section class="card full-card dashboard-quote quote-card">
+                    <div class="section-head">
+                        <div>
+                            <h2>Random perspective</h2>
+                            <p>Multiple APIs, cached instantly, refreshed every 6 hours, with local fallback.</p>
+                        </div>
+                        <div class="quote-actions"><button class="btn" id="refreshQuote">New quote</button><button
+                                class="btn primary" id="saveQuoteDashboard">Save quote</button><a class="btn"
+                                href="#quotes">Saved quotes</a></div>
+                    </div>
+                    <p class="quote-text" id="quoteText">Loading a useful thought...</p>
+                    <div class="quote-source"><span class="tag" id="quoteAuthor">Finite</span><span class="meta"
+                            id="quoteApi">Preparing quote system...</span></div>
+                </section>
+            </div>
+        </section>
+        <section class="page" id="today" data-page="today">
+            <div class="section-head">
+                <div>
+                    <div class="pill"><span class="dot"></span>Today planner</div>
+                    <h2>Today’s calendar view</h2>
+                    <p>Events now cover their full duration. Current time is shown as a live line.</p>
+                </div><span class="tag" id="todayDateTag"></span>
+            </div>
+            <div class="today-grid">
+                <div class="card panel">
+                    <h3>Today’s goal</h3>
+                    <form class="form-grid" id="todayGoalForm"><label>Main goal for today<input id="todayGoalTitle"
+                                placeholder="Finish LTE notes / apply to 2 jobs" required></label><label>Definition of
+                            done<input id="todayGoalDone" placeholder="What exactly counts as done?"></label>
+                        <div class="goal-extra"><label>Priority<select id="todayGoalPriority">
+                                    <option>Normal</option>
+                                    <option>High</option>
+                                    <option>Critical</option>
+                                </select></label><label>Focus minutes<input id="todayGoalMinutes" type="number" min="5"
+                                    max="720" value="60"></label></div><button class="btn primary" type="submit">Save
+                            today’s goal</button>
+                    </form>
+                    <div class="today-goal-box" id="todayGoalBox"></div>
+                    <h3 style="margin-top:18px">Add deadline / event</h3>
+                    <form class="form-grid" id="eventForm"><label>Title<input id="eventTitle"
+                                placeholder="DSA practice / meeting / deadline" required></label>
+                        <div class="goal-extra"><label>Date<input id="eventDate" type="date"
+                                    required></label><label>Type<select id="eventType">
+                                    <option>Event</option>
+                                    <option>Deadline</option>
+                                    <option>Routine</option>
+                                    <option>Break</option>
+                                </select></label></div>
+                        <div class="goal-extra"><label>Start time<input id="eventStart" type="time"
+                                    required></label><label>End time<input id="eventEnd" type="time"></label></div>
+                        <label>Link to goal<select id="eventGoalLink">
+                                <option value="">No linked goal</option>
+                            </select></label><button class="btn primary" type="submit">Add to calendar</button>
+                    </form>
+                </div>
+                <div class="card calendar-card">
+                    <div class="section-head">
+                        <div>
+                            <h3>How your day looks</h3>
+                            <p>Duration blocks span 2–3 hours correctly when you set start and end times.</p>
+                        </div><button class="btn" id="jumpNow">Now</button>
+                    </div>
+                    <div class="kpi-grid">
+                        <div class="mini-kpi"><span class="tiny">Events today</span><strong id="eventsCount">0</strong>
+                        </div>
+                        <div class="mini-kpi"><span class="tiny">Scheduled focus</span><strong
+                                id="focusCount">0m</strong></div>
+                        <div class="mini-kpi"><span class="tiny">Open deadlines</span><strong
+                                id="deadlineCount">0</strong></div>
+                    </div>
+                    <div class="day-timeline visual-timeline" id="dayTimeline" style="margin-top:14px"></div>
+                </div>
+            </div>
+        </section>
+        <section class="page" id="goals" data-page="goals">
+            <div class="section-head">
+                <div>
+                    <h2>Goals system</h2>
+                    <p>Separate outcome goals from process goals and organize them by short, medium and long term.</p>
+                </div>
+            </div>
+            <div class="goal-layout">
+                <div class="card panel">
+                    <h3>Add goal</h3>
+                    <form class="form-grid" id="goalForm"><label>Goal title<input id="goalTitle"
+                                placeholder="Get into Sprinklr / Build portfolio" required></label><label>Target
+                            date<input id="goalDate" type="date" required></label>
+                        <div class="goal-extra"><label>Term<select id="goalHorizon">
+                                    <option value="auto">Auto by date</option>
+                                    <option>Short term</option>
+                                    <option>Medium term</option>
+                                    <option>Long term</option>
+                                </select></label><label>Goal type<select id="goalType">
+                                    <option>Outcome Goal</option>
+                                    <option>Process Goal</option>
+                                </select></label></div><label>Category<select id="goalCategory">
+                                <option>Life</option>
+                                <option>Career</option>
+                                <option>Health</option>
+                                <option>Learning</option>
+                                <option>Finance</option>
+                                <option>Relationship</option>
+                                <option>Other</option>
+                            </select></label><label>Success metric<input id="goalMetric"
+                                placeholder="e.g., 50 DSA problems, 3 interviews"></label>
+                        <div class="goal-extra"><label>Urgency<select id="goalUrgency">
+                                    <option>Normal</option>
+                                    <option>High</option>
+                                    <option>Critical</option>
+                                </select></label><label>Energy needed<select id="goalEnergy">
+                                    <option>Low</option>
+                                    <option>Medium</option>
+                                    <option>High</option>
+                                </select></label></div><label>Connect process to outcome<select id="goalParent">
+                                <option value="">No parent outcome</option>
+                            </select></label><label>First tiny step<input id="goalStep"
+                                placeholder="Open laptop and work for 10 minutes"></label><label>Reward after
+                            progress<input id="goalReward"
+                                placeholder="Tea, walk, music, or a small break"></label><button class="btn primary"
+                            type="submit">Add goal</button>
+                    </form>
+                </div>
+                <div>
+                    <div class="goal-filters" id="goalFilters"><button class="btn filter-btn active"
+                            data-filter="all">All</button><button class="btn filter-btn"
+                            data-filter="Short term">Short</button><button class="btn filter-btn"
+                            data-filter="Medium term">Medium</button><button class="btn filter-btn"
+                            data-filter="Long term">Long</button><button class="btn filter-btn"
+                            data-filter="Outcome Goal">Outcome</button><button class="btn filter-btn"
+                            data-filter="Process Goal">Process</button></div>
+                    <div class="goal-list" id="goalList" style="margin-top:12px"></div>
+                </div>
+            </div>
+        </section>
+        <section class="page" id="reflection" data-page="reflection">
+            <div class="section-head">
+                <div>
+                    <h2>Reflection history</h2>
+                    <p>Save one reflection per day. Previous reflections are read-only.</p>
+                </div><span class="tag" id="reflectionPageTag"></span>
+            </div>
+            <div class="grid">
+                <section class="card full-card reflection-beauty">
+                    <h3>Today’s reflection</h3>
+                    <div class="prompt-card"><span class="tiny">Today’s prompt</span><strong id="promptText">What
+                            deserves your attention today?</strong></div><label>Your answer<textarea id="reflectionText"
+                            placeholder="One honest reflection for today..."></textarea></label>
+                    <div class="reflect-row" style="margin-top:12px"><button class="btn primary"
+                            id="saveReflection">Submit reflection</button><span class="meta" id="reflectionStatus">Not
+                            saved yet.</span></div>
+                </section>
+                <section class="card full-card">
+                    <h3>Previous reflections</h3>
+                    <div class="reflection-history" id="reflectionHistory"></div>
+                </section>
+            </div>
+        </section>
+        <section class="page" id="quotes" data-page="quotes">
+            <div class="section-head">
+                <div>
+                    <h2>Quotes library</h2>
+                    <p>Save quotes that hit hard. Your saved quotes sync when optional cloud sync is enabled.</p>
+                </div>
+                <div class="quote-actions"><button class="btn" id="refreshQuotePage">New quote</button><button
+                        class="btn primary" id="saveQuotePage">Save current quote</button></div>
+            </div>
+            <section class="card full-card dashboard-quote quote-card">
+                <div class="section-head">
+                    <div>
+                        <h2>Current quote</h2>
+                        <p>Same quote engine as dashboard and focus mode.</p>
+                    </div><span class="tag" id="quotePageCount">0 saved</span>
+                </div>
+                <p class="quote-text" id="quoteTextPage">Loading a useful thought...</p>
+                <div class="quote-source"><span class="tag" id="quoteAuthorPage">Finite</span><span class="meta"
+                        id="quoteApiPage">Cached/local</span></div>
+            </section>
+            <div class="section-head" style="margin-top:22px">
+                <div>
+                    <h2>Saved quotes</h2>
+                    <p>A beautiful wall of saved perspective.</p>
+                </div>
+            </div>
+            <div class="saved-quotes-grid" id="savedQuotesGrid"></div>
+        </section>
+    </main>
+    <div class="goal-modal" id="goalModal">
+        <div class="card goal-detail">
+            <div class="modal-head">
+                <div><span class="tag" id="goalDetailCategory">Goal</span>
+                    <h2 id="goalDetailTitle" style="margin-top:8px">Goal detail</h2>
+                    <p id="goalDetailMeta" class="meta"></p>
+                </div><button class="icon-btn" id="closeGoalDetail">Close</button>
+            </div>
+            <div class="detail-grid">
+                <div class="urgency-panel">
+                    <h3>Deadline grid</h3>
+                    <p class="meta">Grid is based on goal creation date → target date. Current shows where you are now.
+                    </p>
+                    <div class="unit-switch"><button data-unit="months">Months</button><button
+                            data-unit="weeks">Weeks</button><button data-unit="days" class="active">Days</button><button
+                            data-unit="hours">Hours</button></div>
+                    <div class="urgency-number" id="goalUrgencyNumber">—</div>
+                    <p class="meta" id="goalUrgencyCopy">—</p>
+                    <div class="micro-grid" id="goalMicroGrid"></div>
+                    <p class="micro-note" id="goalGridNote"></p>
+                </div>
+                <div class="urgency-panel">
+                    <h3>Action plan</h3>
+                    <div class="adhd-strip">
+                        <div class="adhd-chip"><strong>Next action</strong><span id="goalNextAction"
+                                class="tiny">—</span></div>
+                        <div class="adhd-chip"><strong>Metric</strong><span id="goalMetricView" class="tiny">—</span>
+                        </div>
+                        <div class="adhd-chip"><strong>Reward</strong><span id="goalRewardView" class="tiny">—</span>
+                        </div>
+                    </div>
+                    <div class="checklist" id="goalSteps"></div><button class="btn primary" id="startSprint"
+                        style="margin-top:14px">Start 10-minute sprint</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="settings-modal" id="settingsModal">
+        <div class="card modal-card">
+            <div class="modal-head">
+                <h2>Settings</h2><button class="icon-btn" id="closeSettings">Close</button>
+            </div>
+            <form class="form-grid" id="settingsForm"><label>Display name<input id="settingsName"></label><label>Date of
+                    birth<input id="settingsBirth" type="date" required></label><label>Expected lifespan<input
+                        id="settingsLifespan" type="number" min="1" max="130" required></label><label>Theme<select
+                        id="settingsTheme">
+                        <option value="midnight">Midnight</option>
+                        <option value="solar">Solar</option>
+                        <option value="forest">Forest</option>
+                        <option value="light">Minimal Light</option>
+                        <option value="mono">Mono</option>
+                    </select></label><label>Week starts on<select id="settingsWeekStart">
+                        <option value="1">Monday</option>
+                        <option value="0">Sunday</option>
+                    </select></label><button class="btn primary" type="submit">Save settings</button></form>
+            <div class="sync-box">
+                <h3>Optional cloud sync</h3>
+                <p>Local-first by default. Enable Supabase sync only if you want the same data on multiple devices.</p>
+                <div class="sync-row"><label>Email for magic link<input id="syncEmail" type="email"
+                            placeholder="you@example.com"></label><button class="btn primary" id="syncLogin"
+                        type="button">Enable sync</button></div>
+                <div class="home-reflect-actions" style="margin-top:10px"><button class="btn" id="syncNow"
+                        type="button">Sync now</button><button class="btn" id="syncLogout"
+                        type="button">Disconnect</button></div>
+                <p class="meta sync-status" id="syncStatus">Sync not configured yet.</p>
+            </div>
+            <div class="danger-zone">
+                <h3>Reset data</h3>
+                <p>This clears profile, goals, events, reflections, quotes, and theme from this browser.</p><button
+                    class="btn danger-btn" id="resetData">Reset all data</button>
+            </div>
+        </div>
+    </div>
+    <div class="focus-overlay" id="focusOverlay">
+        <div class="card focus-card">
+            <div class="pill" style="margin:auto"><span class="dot"></span>Focus Mode</div>
+            <h2 id="focusTitle" style="margin-top:18px">This hour matters.</h2>
+            <div class="focus-timer" id="focusTimer">00:00:00</div>
+            <p id="focusQuote" class="meta">Breathe. Choose one thing. Begin.</p>
+            <div class="focus-actions"><button class="btn primary" id="closeFocus">Return to dashboard</button><button
+                    class="btn" id="focusNewQuote">New quote</button></div>
+        </div>
+    </div>
+    <div class="mobile-bottom" id="mobileNav"><a href="#dashboard" data-page-link="dashboard">Dash</a><a href="#today"
+            data-page-link="today">Today</a><a href="#goals" data-page-link="goals">Goals</a><button
+            id="mobileFocus">Focus</button><button id="mobileSettings">Settings</button></div>
+    <footer class="shell">
+        <p>Finite is private by design. Your data stays in this browser unless sync is enabled.</p>
+        <p>Built for people who want to spend their time deliberately.</p>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_CONFIG = { url: 'https://trkgtbpbbuixbgupsrul.supabase.co', anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRya2d0YnBiYnVpeGJndXBzcnVsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0ODQ3NzYsImV4cCI6MjA5NDA2MDc3Nn0.H1vAf5UdHZdwxYuxpWVNGLpYFzkl8fZXHPMNthlxC0Q' };
+        const KEYS = { profile: 'finite_profile', goals: 'finite_goals_v7', legacyGoals: 'finite_goals_v6', legacyGoals2: 'finite_goals_v4', theme: 'finite_theme', reflections: 'finite_reflections', events: 'finite_events_v7', legacyEvents: 'finite_events_v6', todayGoals: 'finite_today_goals_v7', legacyTodayGoals: 'finite_today_goals_v6', quoteCache: 'finite_quote_cache_v7', quoteLastApi: 'finite_quote_last_api_v7', savedQuotes: 'finite_saved_quotes_v7', localUpdatedAt: 'finite_local_updated_at_v7' }, $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+        let state = { profile: null, goals: [], events: [], todayGoals: {}, theme: 'midnight', reflections: {}, quote: null, savedQuotes: [], sync: { client: null, user: null, enabled: false } }, activeGoalId = null, activeGoalUnit = 'days', sprintUntil = null, goalFilter = 'all', quoteFetching = false; const ms = { second: 1000, minute: 60000, hour: 3600000, day: 86400000, week: 604800000 };
+        const prompts = ['What deserves your attention today?', 'What would make today meaningful?', 'What is one small thing you can finish today?', 'What will matter one year from now?', 'Where is your time leaking?', 'What skill deserves one focused hour?', 'What small win would compound?'];
+        const fallbackQuotes = [{ text: 'Time is not the enemy. It is the canvas.', author: 'Finite' }, { text: 'One focused hour can change the shape of a week.', author: 'Finite' }, { text: 'You do not need more time. You need a clearer next action.', author: 'Finite' }, { text: 'Make the next action so small that starting feels obvious.', author: 'Finite' }];
+        const quoteApis = [{ name: 'ZenQuotes', url: 'https://zenquotes.io/api/random', parse: data => ({ text: data[0].q, author: data[0].a }) }, { name: 'Quotable', url: 'https://api.quotable.io/random', parse: data => ({ text: data.content, author: data.author }) }, { name: 'DummyJSON', url: 'https://dummyjson.com/quotes/random', parse: data => ({ text: data.quote, author: data.author }) }, { name: 'Motivational Spark', url: 'https://motivational-spark-api.vercel.app/api/quotes/random', parse: data => ({ text: data.quote, author: data.author }) }];
+        const clamp = (n, min = 0, max = 100) => Math.min(max, Math.max(min, n)), fmt = n => Math.max(0, Math.floor(Number(n) || 0)).toLocaleString(), pct = n => clamp(n).toFixed(1) + '%', dateKey = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`, esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        function readJSON(k, fb) { try { return JSON.parse(localStorage.getItem(k)) ?? fb } catch { return fb } } function markDirty() { localStorage.setItem(KEYS.localUpdatedAt, new Date().toISOString()) } function save(k, v) { localStorage.setItem(k, JSON.stringify(v)); if (![KEYS.quoteCache, KEYS.quoteLastApi].includes(k)) markDirty() } function applyTheme(t) { state.theme = t; document.body.dataset.theme = t; localStorage.setItem(KEYS.theme, t); if ($('#settingsTheme')) $('#settingsTheme').value = t }
+        function termFromDate(date) { const days = (new Date(date + 'T23:59:59') - new Date()) / ms.day; if (days <= 30) return 'Short term'; if (days <= 180) return 'Medium term'; return 'Long term' } function migrateGoals(gs) { return (gs || []).map(g => ({ ...g, id: g.id || String(Date.now() + Math.random()), type: g.type || 'Outcome Goal', horizon: g.horizon || termFromDate(g.date), metric: g.metric || '', parentId: g.parentId || '', createdAt: g.createdAt || g.created || new Date().toISOString() })) }
+        function load() { state.profile = readJSON(KEYS.profile, null); state.goals = readJSON(KEYS.goals, null) || migrateGoals(readJSON(KEYS.legacyGoals, null) || readJSON(KEYS.legacyGoals2, [])); state.events = readJSON(KEYS.events, null) || readJSON(KEYS.legacyEvents, []); state.todayGoals = readJSON(KEYS.todayGoals, null) || readJSON(KEYS.legacyTodayGoals, {}); state.theme = localStorage.getItem(KEYS.theme) || 'midnight'; state.reflections = readJSON(KEYS.reflections, {}); state.quote = readJSON(KEYS.quoteCache, null); state.savedQuotes = readJSON(KEYS.savedQuotes, []); applyTheme(state.theme) }
+        function addYears(d, y) { const x = new Date(d); x.setFullYear(x.getFullYear() + Number(y)); return x } function lifeStats(now = new Date()) { if (!state.profile) return null; const birth = new Date(state.profile.birthDate + 'T00:00:00'), end = addYears(birth, state.profile.lifespan), total = end - birth, lived = now - birth, rem = Math.max(0, end - now), days = rem / ms.day, weeksTotal = Math.ceil(total / ms.week); return { days, weeks: days / 7, months: days / 30.436875, years: days / 365.2425, done: clamp(lived / total * 100), left: clamp(100 - lived / total * 100), totalWeeks: weeksTotal, livedWeeks: clamp(Math.floor(lived / ms.week), 0, weeksTotal) } }
+        function yearStats(now = new Date()) { const s = new Date(now.getFullYear(), 0, 1), e = new Date(now.getFullYear() + 1, 0, 1), rem = Math.max(0, e - now), done = clamp((now - s) / (e - s) * 100); return { done, left: 100 - done, days: rem / ms.day, hours: (rem % ms.day) / ms.hour, weeks: rem / ms.week } } function monthStats(now = new Date()) { const s = new Date(now.getFullYear(), now.getMonth(), 1), e = new Date(now.getFullYear(), now.getMonth() + 1, 1), rem = Math.max(0, e - now), done = clamp((now - s) / (e - s) * 100); return { done, left: 100 - done, days: rem / ms.day, hours: (rem % ms.day) / ms.hour, name: now.toLocaleString(undefined, { month: 'long' }) } } function weekStats(now = new Date()) { const startPref = Number(state.profile?.weekStart ?? 1), day = now.getDay(), diff = (day - startPref + 7) % 7, s = new Date(now); s.setDate(now.getDate() - diff); s.setHours(0, 0, 0, 0); const e = new Date(s); e.setDate(s.getDate() + 7); const rem = Math.max(0, e - now), done = clamp((now - s) / (e - s) * 100); return { done, left: 100 - done, days: rem / ms.day, hours: (rem % ms.day) / ms.hour } } function dayStats(now = new Date()) { const s = new Date(now); s.setHours(0, 0, 0, 0); const e = new Date(s); e.setDate(e.getDate() + 1); const rem = Math.max(0, e - now), done = clamp((now - s) / (e - s) * 100); return { done, left: 100 - done, hours: Math.floor(rem / ms.hour), minutes: Math.floor((rem % ms.hour) / ms.minute), seconds: Math.floor((rem % ms.minute) / 1000) } }
+        function greeting() { const h = new Date().getHours(), g = h < 5 ? 'Good night' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : h < 21 ? 'Good evening' : 'Good night', n = state.profile?.name?.trim(); return n ? `${g}, ${n}. Here’s your timeline.` : 'Here’s your timeline.' } function card(title, id) { return `<article class="card stat"><div><div class="label-row"><strong>${title}</strong><span id="${id}Pct">—</span></div><div class="metric" id="${id}Metric">—</div><div class="meta" id="${id}Meta">—</div></div><div><div class="bar"><div class="fill" id="${id}Bar"></div></div><div class="meta" id="${id}Note">—</div></div></article>` } function initCards() { if ($('#lifeMetric')) return; $('#cards').innerHTML = card('Life remaining', 'life') + card('Year remaining', 'year') + card('Month remaining', 'month') + card('Week remaining', 'week') + card('Today remaining', 'day') + `<article class="card stat"><div><div class="label-row"><strong>Current moment</strong><span>Live</span></div><div class="metric small" id="nowTime">—</div><div class="meta" id="nowDate">—</div></div><p class="meta">A private dashboard for your finite days.</p></article>` } function setCard(id, metric, meta, left, note) { $('#' + id + 'Metric').textContent = metric; $('#' + id + 'Meta').textContent = meta; $('#' + id + 'Pct').textContent = pct(left) + ' remaining'; $('#' + id + 'Bar').style.width = clamp(left) + '%'; $('#' + id + 'Note').textContent = note || '' }
+        function updateDashboard() { initCards(); const now = new Date(); $('#nowTime').textContent = now.toLocaleTimeString(); $('#nowDate').textContent = now.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); $('#greeting').textContent = state.profile ? greeting() : 'Preview your timeline.'; if (!state.profile) { setCard('life', '28,000', 'Approximate days ahead', 69, 'Create your timeline for real values.');['year', 'month', 'week', 'day'].forEach(x => setCard(x, '—', 'Set up to personalize', 0, '')); updateCommandCenter(); return } const l = lifeStats(now), y = yearStats(now), m = monthStats(now), w = weekStats(now), d = dayStats(now); setCard('life', fmt(l.weeks), `${fmt(l.days)} days · ${fmt(l.years)} years · ${fmt(l.months)} months`, l.left, `Based on ${state.profile.lifespan} years.`); setCard('year', `${fmt(y.days)}d ${fmt(y.hours)}h`, `${fmt(y.weeks)} weeks left in ${now.getFullYear()}`, y.left, `${pct(y.done)} of the year is complete.`); setCard('month', `${fmt(m.days)}d ${fmt(m.hours)}h`, `${pct(m.left)} left in ${m.name}`, m.left, `${pct(m.done)} of the month is complete.`); setCard('week', pct(w.left), `${fmt(w.days)} days ${fmt(w.hours)} hours left this week`, w.left, `Week starts on ${Number(state.profile.weekStart ?? 1) === 1 ? 'Monday' : 'Sunday'}.`); setCard('day', `${String(d.hours).padStart(2, '0')}:${String(d.minutes).padStart(2, '0')}:${String(d.seconds).padStart(2, '0')}`, `${pct(d.left)} of today remaining`, d.left, 'Spend the next hour deliberately.'); updateCommandCenter() }
+        function updateCommandCenter() { const k = dateKey(new Date()), t = state.todayGoals[k]; $('#todayGoalDash').textContent = t?.title || 'Not set'; $('#todayGoalMeta').textContent = t?.doneText || 'Choose one clear win for today.'; $('#todayGoalStatus').textContent = t?.completed ? 'Done' : 'Today'; $('#homeTodayGoalTitle').textContent = t?.title || 'No goal set for today.'; $('#homeTodayGoalMeta').textContent = t ? `${t.doneText || 'Definition of done not specified.'} · ${t.minutes || 0} focus minutes · ${t.priority || 'Normal'} priority` : 'Set one main goal and schedule blocks around it.'; $('#homeCompleteTodayGoal').classList.toggle('hidden', !t?.title); $('#homeCompleteTodayGoal').textContent = t?.completed ? 'Mark open' : 'Mark done'; const next = [...state.goals].filter(g => new Date(g.date + 'T23:59:59') >= new Date()).sort((a, b) => new Date(a.date) - new Date(b.date))[0]; $('#nextDeadlineDash').textContent = next ? `${fmt((new Date(next.date + 'T23:59:59') - new Date()) / ms.day)} days` : '—'; $('#nextDeadlineMeta').textContent = next ? `${next.title} · ${next.date}` : 'No deadlines yet.'; const out = state.goals.filter(g => g.type === 'Outcome Goal').length, pro = state.goals.filter(g => g.type === 'Process Goal').length; $('#goalBalanceDash').textContent = `${out} / ${pro}`; $('#goalBalanceMeta').textContent = `${out} outcome goals and ${pro} process goals.`; renderRollover() }
+        function previousDailyGoals() { const today = dateKey(new Date()); return Object.entries(state.todayGoals || {}).filter(([k, g]) => k < today && g && g.title && !g.completed && !g.archived && !g.rolledToDate).map(([date, g]) => ({ date, ...g })) } function todayRecord() { const k = dateKey(new Date()); if (!state.todayGoals[k]) state.todayGoals[k] = { title: '', doneText: '', priority: 'Normal', minutes: 0, completed: false, createdAt: new Date().toISOString(), carriedItems: [] }; if (!Array.isArray(state.todayGoals[k].carriedItems)) state.todayGoals[k].carriedItems = []; return state.todayGoals[k] } function renderRollover() { const pending = previousDailyGoals(), card = $('#rolloverCard'); if (!card) return; card.classList.toggle('hidden', pending.length === 0); $('#rolloverCount').textContent = `${pending.length} pending`; $('#rolloverList').innerHTML = pending.map(item => `<div class="rollover-item"><div><strong>${esc(item.title)}</strong><p class="meta">From ${esc(item.date)} · ${esc(item.doneText || 'No definition of done')}</p></div><div class="rollover-actions"><button class="btn primary" data-roll-move="${esc(item.date)}">Move to today</button><button class="btn" data-roll-archive="${esc(item.date)}">Archive</button></div></div>`).join('') } function moveRolloverToToday(oldDate) { const today = dateKey(new Date()), old = state.todayGoals[oldDate]; if (!old) return; const current = state.todayGoals[today]; if (!current || !current.title) { state.todayGoals[today] = { ...old, completed: false, createdAt: new Date().toISOString(), rolledFromDate: oldDate, carriedItems: [] } } else { const rec = todayRecord(); rec.carriedItems.push({ id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()), title: old.title, doneText: old.doneText || '', fromDate: oldDate, completed: false, createdAt: new Date().toISOString() }) } state.todayGoals[oldDate] = { ...old, rolledToDate: today }; save(KEYS.todayGoals, state.todayGoals); renderRollover(); renderToday(); updateDashboard() } function archiveRollover(oldDate) { if (state.todayGoals[oldDate]) { state.todayGoals[oldDate].archived = true; save(KEYS.todayGoals, state.todayGoals) } renderRollover(); updateDashboard() }
+        function renderWeekGrid() { const grid = $('#weekGrid'); if (!state.profile) { grid.innerHTML = '<div class="empty" style="grid-column:1/-1">Create your timeline to reveal your life in weeks.</div>'; return } const l = lifeStats(), total = Math.min(l.totalWeeks, 7000); let out = ''; for (let i = 0; i < total; i++) { const st = i < l.livedWeeks ? 'lived' : i === l.livedWeeks ? 'current' : 'remaining'; out += `<span class="week ${st === 'remaining' ? '' : st}" title="Week ${i + 1} · ${st}"></span>` } grid.innerHTML = out }
+        function populateGoalSelects() { const outcomes = state.goals.filter(g => g.type === 'Outcome Goal'); $('#goalParent').innerHTML = '<option value="">No parent outcome</option>' + outcomes.map(g => `<option value="${g.id}">${esc(g.title)}</option>`).join(''); $('#eventGoalLink').innerHTML = '<option value="">No linked goal</option>' + state.goals.map(g => `<option value="${g.id}">${esc(g.title)}</option>`).join('') } function renderGoals() { populateGoalSelects(); let goals = [...state.goals].sort((a, b) => new Date(a.date) - new Date(b.date)); if (goalFilter !== 'all') goals = goals.filter(g => g.horizon === goalFilter || g.type === goalFilter); if (!goals.length) { $('#goalList').innerHTML = '<div class="empty">Add an outcome goal, then attach process goals that make it real.</div>'; return } $('#goalList').innerHTML = goals.map(g => { const target = new Date(g.date + 'T23:59:59'), created = new Date(g.createdAt || new Date()), rem = Math.max(0, target - new Date()), days = Math.ceil(rem / ms.day), done = target < new Date(), parent = state.goals.find(x => x.id === g.parentId); return `<article class="card goal-card" data-goal="${g.id}"><div class="goal-top"><div><h3>${esc(g.title)}</h3><span class="tag">${esc(g.horizon)}</span> <span class="tag">${esc(g.type)}</span> <span class="tag">${esc(g.category || 'Goal')}</span></div><button class="delete" data-del="${g.id}">Delete</button></div><div class="metric small">${done ? 'Completed' : fmt(days) + ' days'}</div><div class="meta">Created ${created.toLocaleDateString()} · Target ${target.toLocaleDateString()} · ${done ? 'date passed' : fmt(rem / ms.week) + ' weeks remaining'}</div><p class="meta">${esc(g.metric || 'No success metric yet.')}${parent ? ' · supports ' + esc(parent.title) : ''}</p></article>` }).join(''); updateDashboard() }
+        function timeToMinutes(t) { if (!t) return 0; const [h, m] = t.split(':').map(Number); return (h || 0) * 60 + (m || 0) } function minutesToLabel(min) { const h = Math.floor(min / 60), m = min % 60; return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}` } function eventDuration(e) { const s = timeToMinutes(e.start || '00:00'); let end = e.end ? timeToMinutes(e.end) : s + 60; if (end <= s) end = s + 60; return { start: s, end: Math.min(1440, end), duration: Math.max(30, Math.min(1440, end) - s) } } function layoutEvents(events) { const sorted = events.map(e => ({ ...e, ...eventDuration(e) })).sort((a, b) => a.start - b.start || a.end - b.end); const active = []; return sorted.map(e => { for (let i = active.length - 1; i >= 0; i--)if (active[i].end <= e.start) active.splice(i, 1); const used = new Set(active.map(x => x.col)); let col = 0; while (used.has(col)) col++; e.col = col; active.push(e); const maxCol = Math.max(...active.map(x => x.col), col) + 1; active.forEach(x => x.cols = Math.max(x.cols || 1, maxCol)); e.cols = maxCol; return e }) }
+        function renderToday() { const today = dateKey(new Date()); $('#todayDateTag').textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' }); $('#eventDate').value = $('#eventDate').value || today; const tg = state.todayGoals[today], carried = (tg?.carriedItems || []).filter(x => !x.completed); let carriedHtml = carried.length ? `<div class="rollover-list" style="margin-top:12px"><h3>Carried into today</h3>${carried.map(x => `<div class="rollover-item"><div><strong>${esc(x.title)}</strong><p class="meta">From ${esc(x.fromDate)} · ${esc(x.doneText || 'No definition')}</p></div><button class="btn" data-carry-done="${esc(x.id)}">Done</button></div>`).join('')}</div>` : ''; $('#todayGoalBox').innerHTML = tg && tg.title ? `<div class="progress-ring" style="--p:${tg.completed ? 100 : 35}%"><span>${tg.completed ? 'Done' : 'Live'}</span></div><h3 style="margin-top:12px">${esc(tg.title)}</h3><p class="meta">Done means: ${esc(tg.doneText || 'Not specified')}</p><div class="quick-row"><button class="btn primary" id="completeTodayGoal">${tg.completed ? 'Mark open' : 'Mark done'}</button><button class="btn" id="startTodaySprint">Start sprint</button></div>${carriedHtml}` : `<div class="empty">No main goal set for today.</div>${carriedHtml}`; const events = state.events.filter(e => e.date === today).sort((a, b) => (a.start || '00:00').localeCompare(b.start || '00:00')); $('#eventsCount').textContent = events.length; $('#focusCount').textContent = (tg?.minutes || 0) + 'm'; $('#deadlineCount').textContent = events.filter(e => e.type === 'Deadline').length; let hours = ''; for (let h = 0; h < 24; h++)hours += `<div class="timeline-hour"><div class="time-label">${String(h).padStart(2, '0')}:00</div><div></div></div>`; const now = new Date(), nowMin = now.getHours() * 60 + now.getMinutes(); let blocks = layoutEvents(events).map(e => { const top = e.start, height = Math.max(34, e.duration), width = 100 / (e.cols || 1), left = (e.col || 0) * width, type = (e.type || 'event').toLowerCase(), g = state.goals.find(x => x.id === e.goalId); return `<div class="event-block ${type}" style="top:${top}px;height:${height}px;left:calc(${left}% + 2px);width:calc(${width}% - 6px)" title="${esc(e.title)}"><strong>${esc(e.title)}</strong><div class="tiny">${esc(e.type)} · ${minutesToLabel(e.start)}–${minutesToLabel(e.end)}${g ? ' · ' + esc(g.title) : ''}</div><button data-event-del="${e.id}">Delete</button></div>` }).join(''); $('#dayTimeline').innerHTML = hours + `<div class="timeline-lane">${blocks}</div><div class="now-line" style="top:${nowMin}px"></div>`; updateCommandCenter() }
+        function renderReflection() { const t = dateKey(new Date()), idx = Math.floor(new Date(t).getTime() / ms.day) % prompts.length, prompt = prompts[idx], label = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' }), today = state.reflections[t] || ''; $('#homePromptText').textContent = prompt; $('#promptText').textContent = prompt; $('#homeTodayTag').textContent = label; $('#reflectionPageTag').textContent = label; $('#homeReflectionText').value = today; $('#reflectionText').value = today; $('#homeReflectionStatus').textContent = today ? 'Saved for today. You can resubmit today only.' : 'One reflection can be saved per day.'; $('#reflectionStatus').textContent = today ? 'Saved for today.' : 'Not saved yet.'; const entries = Object.entries(state.reflections).filter(([k, v]) => k !== t && String(v || '').trim()).sort((a, b) => b[0].localeCompare(a[0])); $('#reflectionHistory').innerHTML = entries.length ? entries.map(([k, v]) => `<article class="reflection-entry"><strong>${esc(new Date(k + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }))}</strong><p class="meta">${esc(v)}</p></article>`).join('') : '<div class="empty">No previous reflections yet. Save today’s reflection and come back tomorrow.</div>' } function saveTodayReflection(v) { const value = String(v || '').trim(); if (!value) { $('#homeReflectionStatus').textContent = 'Write something first.'; $('#reflectionStatus').textContent = 'Write something first.'; return } state.reflections[dateKey(new Date())] = value; save(KEYS.reflections, state.reflections); renderReflection() }
+        function normalizeQuote(q) { return { text: String(q?.text || '').trim(), author: String(q?.author || 'Unknown').trim() || 'Unknown' } } function quoteKey(q) { return (q?.text || '').trim().toLowerCase() } function applyQuote(q, source) { q = normalizeQuote(q); if (!q.text && state.quote) q = state.quote; if (!q.text) q = fallbackQuotes[0]; state.quote = q; $('#quoteText').textContent = `“${q.text}”`; $('#quoteText').classList.remove('quote-loading'); $('#quoteAuthor').textContent = q.author || 'Unknown'; $('#quoteApi').textContent = source || q.source || 'Cached/local'; $('#focusQuote').textContent = `${q.text} — ${q.author || 'Unknown'}`; if ($('#quoteTextPage')) { $('#quoteTextPage').textContent = `“${q.text}”`; $('#quoteAuthorPage').textContent = q.author || 'Unknown'; $('#quoteApiPage').textContent = source || q.source || 'Cached/local' } } function loadCachedQuote() { const cached = readJSON(KEYS.quoteCache, null); if (cached?.text) applyQuote(cached, cached.source || 'Cached quote'); else applyQuote(fallbackQuotes[0], 'Local fallback ready') } function shuffledApis() { const last = localStorage.getItem(KEYS.quoteLastApi); let arr = [...quoteApis].sort(() => Math.random() - .5); if (arr[0]?.name === last && arr.length > 1) { const first = arr.shift(); arr.push(first) } return arr } async function fetchRandomQuote() { if (quoteFetching) return state.quote; quoteFetching = true; const previousKey = quoteKey(state.quote); $('#quoteText').classList.add('quote-loading'); $('#quoteApi').textContent = 'Fetching a fresh quote...'; try { for (const api of shuffledApis()) { try { const res = await fetch(api.url, { cache: 'no-store' }); if (!res.ok) throw new Error(api.name + ' HTTP ' + res.status); const parsed = normalizeQuote(api.parse(await res.json())); if (!parsed.text) throw new Error(api.name + ' returned empty quote'); if (quoteKey(parsed) === previousKey) throw new Error(api.name + ' repeated previous quote'); const finalQuote = { ...parsed, source: 'Source: ' + api.name, fetchedAt: new Date().toISOString() }; save(KEYS.quoteCache, finalQuote); localStorage.setItem(KEYS.quoteLastApi, api.name); console.log('[Finite Quote] API used:', api.name); applyQuote(finalQuote, finalQuote.source); return finalQuote } catch (err) { console.warn('[Finite Quote] API failed:', api.name, err) } } const fb = fallbackQuotes.find(q => quoteKey(q) !== previousKey) || fallbackQuotes[0], finalQuote = { ...fb, source: 'Offline/local fallback', fetchedAt: new Date().toISOString() }; save(KEYS.quoteCache, finalQuote); console.log('[Finite Quote] API used: local fallback'); applyQuote(finalQuote, finalQuote.source); return finalQuote } finally { quoteFetching = false; $('#quoteText').classList.remove('quote-loading'); if (!$('#quoteText').textContent.trim()) applyQuote(state.quote || fallbackQuotes[0], 'Local fallback') } } function scheduleQuoteRefresh() { setInterval(() => fetchRandomQuote(), 6 * 60 * 60 * 1000); const cached = readJSON(KEYS.quoteCache, null); if (!cached?.fetchedAt || Date.now() - new Date(cached.fetchedAt).getTime() > 6 * 60 * 60 * 1000) fetchRandomQuote() }
+        function renderSavedQuotes() { if (!$('#savedQuotesGrid')) return; $('#quotePageCount').textContent = `${state.savedQuotes.length} saved`; $('#savedQuotesGrid').innerHTML = state.savedQuotes.length ? state.savedQuotes.slice().sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt)).map(q => `<article class="card saved-quote"><blockquote>${esc(q.text)}</blockquote><footer>— ${esc(q.author || 'Unknown')}<br><span class="tiny">Saved ${new Date(q.savedAt).toLocaleString()} · ${esc(q.source || 'Quote')}</span></footer><div class="saved-quote-actions"><button class="btn" data-copy-quote="${q.id}">Copy</button><button class="btn danger-btn" data-delete-quote="${q.id}">Delete</button></div></article>`).join('') : '<div class="empty" style="grid-column:1/-1">No saved quotes yet. Save one that hits hard.</div>' } function saveCurrentQuote() { const q = normalizeQuote(state.quote); if (!q.text) return; const key = quoteKey(q); if (state.savedQuotes.some(x => quoteKey(x) === key)) { if ($('#quoteApi')) $('#quoteApi').textContent = 'Already saved'; return } state.savedQuotes.push({ id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()), text: q.text, author: q.author, source: state.quote?.source || 'Quote', savedAt: new Date().toISOString() }); save(KEYS.savedQuotes, state.savedQuotes); renderSavedQuotes(); if ($('#quoteApi')) $('#quoteApi').textContent = 'Saved to quote library' }
+        function goalRemaining(g) { const now = new Date(), target = new Date(g.date + 'T23:59:59'), created = new Date(g.createdAt || now), total = Math.max(ms.hour, target - created), elapsed = clamp(now - created, 0, total), remaining = Math.max(0, target - now); return { created, target, total, elapsed, remaining, done: target < now } } function unitsFor(unit) { return unit === 'hours' ? ms.hour : unit === 'days' ? ms.day : unit === 'weeks' ? ms.week : ms.day * 30.436875 } function openGoalDetail(id) { if (!state.goals.find(x => x.id === id)) return; activeGoalId = id; activeGoalUnit = 'days'; $('#goalModal').classList.add('open'); renderGoalDetail() } function closeGoalDetail() { $('#goalModal').classList.remove('open') } function renderGoalDetail() { const g = state.goals.find(x => x.id === activeGoalId); if (!g) return; const r = goalRemaining(g), unitMs = unitsFor(activeGoalUnit), totalUnits = Math.max(1, Math.ceil(r.total / unitMs)), elapsedUnits = clamp(Math.floor(r.elapsed / unitMs), 0, totalUnits - 1), remainingUnits = Math.max(0, Math.ceil(r.remaining / unitMs)); const cap = activeGoalUnit === 'hours' ? 240 : activeGoalUnit === 'days' ? 366 : activeGoalUnit === 'weeks' ? 156 : 120, shown = Math.min(totalUnits, cap), ratio = totalUnits / shown, currentIndex = Math.min(shown - 1, Math.floor(elapsedUnits / ratio)); $('#goalDetailTitle').textContent = g.title; $('#goalDetailCategory').textContent = `${g.horizon} · ${g.type} · ${g.urgency || 'Normal'}`; $('#goalDetailMeta').textContent = `Created: ${r.created.toLocaleDateString()} · Target: ${r.target.toLocaleDateString()} · ${r.done ? 'Date passed' : 'Upcoming'}`; $$('.unit-switch button').forEach(b => b.classList.toggle('active', b.dataset.unit === activeGoalUnit)); $('#goalUrgencyNumber').textContent = r.done ? 'Date passed' : `${fmt(remainingUnits)} ${activeGoalUnit} left`; $('#goalUrgencyCopy').textContent = 'Grid uses creation date → deadline. Current cell shows progress from when this goal was created.'; let cells = ''; for (let i = 0; i < shown; i++) { let cls = 'micro-cell'; if (i < currentIndex) cls += ' past'; if (i === currentIndex) cls += ' current'; if (i === shown - 1) cls += ' deadline'; cells += `<span class="${cls}" title="${i === currentIndex ? 'Current' : i === shown - 1 ? 'Deadline' : 'Goal unit'}"></span>` } $('#goalMicroGrid').innerHTML = cells; $('#goalGridNote').textContent = totalUnits > cap ? `${fmt(totalUnits)} ${activeGoalUnit} total from creation to deadline. Showing ${shown} grouped cells; current is at cell ${currentIndex + 1}.` : `Showing ${fmt(totalUnits)} ${activeGoalUnit} from creation to deadline. Current is cell ${currentIndex + 1}; ${fmt(remainingUnits)} ${activeGoalUnit} left.`; $('#goalNextAction').textContent = g.firstStep || 'Write the smallest visible next action.'; $('#goalMetricView').textContent = g.metric || 'Define one measurable proof.'; $('#goalRewardView').textContent = g.reward || 'Choose a small reward after progress.'; const steps = [g.firstStep || 'Open the work area for 2 minutes', 'Remove one distraction', 'Do a 10-minute starter sprint', 'Write the next checkpoint', 'Reward progress, then continue']; $('#goalSteps').innerHTML = steps.map(s => `<label class="check-item"><input type="checkbox"><span>${esc(s)}</span></label>`).join('') }
+        function supabaseConfigured() { return SUPABASE_CONFIG.url.startsWith('https://') && SUPABASE_CONFIG.anonKey.startsWith('ey') && window.supabase } function snapshotData() { return { profile: state.profile, goals: state.goals, events: state.events, todayGoals: state.todayGoals, reflections: state.reflections, savedQuotes: state.savedQuotes, theme: state.theme, updatedAt: localStorage.getItem(KEYS.localUpdatedAt) || new Date().toISOString() } } function applySnapshot(data) { if (!data) return; state.profile = data.profile || state.profile; state.goals = data.goals || []; state.events = data.events || []; state.todayGoals = data.todayGoals || {}; state.reflections = data.reflections || {}; state.savedQuotes = data.savedQuotes || []; if (data.theme) applyTheme(data.theme); save(KEYS.profile, state.profile); save(KEYS.goals, state.goals); save(KEYS.events, state.events); save(KEYS.todayGoals, state.todayGoals); save(KEYS.reflections, state.reflections); save(KEYS.savedQuotes, state.savedQuotes); renderGoals(); renderToday(); renderReflection(); renderSavedQuotes(); renderWeekGrid(); updateDashboard() } function syncStatus(msg) { if ($('#syncStatus')) $('#syncStatus').textContent = msg } async function initSupabase() { if (!supabaseConfigured()) { syncStatus('Supabase is not configured in code yet. Paste project URL and anon key first.'); return } state.sync.client = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey); const { data } = await state.sync.client.auth.getSession(); state.sync.user = data.session?.user || null; state.sync.enabled = !!state.sync.user; syncStatus(state.sync.user ? `Sync connected as ${state.sync.user.email}` : 'Sync ready. Enter email to receive magic link.'); state.sync.client.auth.onAuthStateChange((_event, session) => { state.sync.user = session?.user || null; state.sync.enabled = !!state.sync.user; syncStatus(state.sync.user ? `Sync connected as ${state.sync.user.email}` : 'Sync disconnected'); if (state.sync.user) syncNow() }); if (state.sync.user) syncNow() } async function sendMagicLink() { if (!supabaseConfigured()) return syncStatus('Supabase config missing. Set URL and anon key in code.'); if (!state.sync.client) await initSupabase(); const email = $('#syncEmail').value.trim(); if (!email) return syncStatus('Enter an email first.'); syncStatus('Sending magic link...'); const { error } = await state.sync.client.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } }); syncStatus(error ? 'Sync error: ' + error.message : 'Magic link sent. Open it on this device to connect sync.') } async function syncNow() { if (!state.sync.client || !state.sync.user) return syncStatus('Connect sync first.'); syncStatus('Syncing...'); const client = state.sync.client, user = state.sync.user, local = snapshotData(); const { data: cloud, error: readErr } = await client.from('finite_user_data').select('data,updated_at').eq('user_id', user.id).maybeSingle(); if (readErr) { syncStatus('Read sync error: ' + readErr.message); return } const cloudTime = cloud?.data?.updatedAt || cloud?.updated_at, localTime = local.updatedAt; if (cloud && cloudTime && new Date(cloudTime) > new Date(localTime)) { applySnapshot(cloud.data); syncStatus('Pulled latest cloud data.') } else { const { error } = await client.from('finite_user_data').upsert({ user_id: user.id, data: local, updated_at: new Date().toISOString() }, { onConflict: 'user_id' }); syncStatus(error ? 'Write sync error: ' + error.message : 'Synced successfully at ' + new Date().toLocaleTimeString()) } } async function disconnectSync() { if (state.sync.client) await state.sync.client.auth.signOut(); state.sync.user = null; state.sync.enabled = false; syncStatus('Sync disconnected. Local data remains on this device.') }
+        function showPage(id) { const page = id || location.hash.replace('#', '') || (state.profile ? 'dashboard' : 'setup'); $$('.page').forEach(p => p.classList.toggle('active', p.dataset.page === page)); $$('[data-page-link]').forEach(a => a.classList.toggle('active', a.dataset.pageLink === page)); if (page === 'today') renderToday(); if (page === 'goals') renderGoals(); if (page === 'reflection') renderReflection(); if (page === 'quotes') { renderSavedQuotes(); applyQuote(state.quote || fallbackQuotes[0], state.quote?.source || 'Cached/local') } window.scrollTo({ top: 0, behavior: 'smooth' }) } function saveProfileFrom(name, birth, lifespan, weekStart = 1) { state.profile = { name: name.trim(), birthDate: birth, lifespan: Number(lifespan || 80), weekStart: Number(weekStart) }; save(KEYS.profile, state.profile); renderWeekGrid(); updateDashboard(); showPage('dashboard') } function openSettings() { const p = state.profile || { name: '', birthDate: '', lifespan: 80, weekStart: 1 }; $('#settingsName').value = p.name || ''; $('#settingsBirth').value = p.birthDate || ''; $('#settingsLifespan').value = p.lifespan || 80; $('#settingsWeekStart').value = String(p.weekStart ?? 1); $('#settingsTheme').value = state.theme; $('#settingsModal').classList.add('open') } function closeSettings() { $('#settingsModal').classList.remove('open') } function openFocus() { if (!sprintUntil) $('#focusTitle').textContent = 'This hour matters.'; $('#focusOverlay').classList.add('open'); updateFocusTimer() } function closeFocus() { $('#focusOverlay').classList.remove('open') } function updateFocusTimer() { if (sprintUntil) { const rem = Math.max(0, sprintUntil - Date.now()), m = Math.floor(rem / ms.minute), s = Math.floor((rem % ms.minute) / 1000); $('#focusTimer').textContent = `00:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`; if (rem <= 0) { sprintUntil = null; $('#focusTitle').textContent = 'Sprint complete. Capture the next tiny step.' } return } const d = dayStats(); $('#focusTimer').textContent = `${String(d.hours).padStart(2, '0')}:${String(d.minutes).padStart(2, '0')}:${String(d.seconds).padStart(2, '0')}` } function startSprint() { sprintUntil = Date.now() + 10 * 60 * 1000; openFocus(); $('#focusTitle').textContent = '10-minute starter sprint' } function dashboardSummary() { return state.profile ? `Finite snapshot\nLife: ${$('#lifeMetric').textContent} weeks remaining\nToday: ${$('#dayMetric').textContent} remaining\nToday goal: ${$('#todayGoalDash').textContent}` : 'Finite: set up your timeline to see your time.' } function copySummary() { navigator.clipboard?.writeText(dashboardSummary()); $('#copySummary').textContent = 'Copied'; setTimeout(() => $('#copySummary').textContent = 'Copy summary', 1200) } function exportSnapshot() { const a = document.createElement('a'); const blob = new Blob([dashboardSummary()], { type: 'text/plain' }); a.href = URL.createObjectURL(blob); a.download = 'finite-snapshot.txt'; a.click(); URL.revokeObjectURL(a.href) }
+        function bind() { initCards(); window.addEventListener('hashchange', () => showPage()); $('#profileForm').onsubmit = e => { e.preventDefault(); saveProfileFrom($('#displayName').value, $('#birthDate').value, $('#lifespan').value, 1) }; $('#todayGoalForm').onsubmit = e => { e.preventDefault(); const k = dateKey(new Date()); state.todayGoals[k] = { title: $('#todayGoalTitle').value.trim(), doneText: $('#todayGoalDone').value.trim(), priority: $('#todayGoalPriority').value, minutes: Number($('#todayGoalMinutes').value || 60), completed: false, createdAt: new Date().toISOString(), carriedItems: state.todayGoals[k]?.carriedItems || [] }; save(KEYS.todayGoals, state.todayGoals); e.target.reset(); renderToday(); updateDashboard() }; function toggleTodayGoal() { const k = dateKey(new Date()); if (state.todayGoals[k]) { state.todayGoals[k].completed = !state.todayGoals[k].completed; save(KEYS.todayGoals, state.todayGoals); renderToday(); updateDashboard() } } $('#homeCompleteTodayGoal').onclick = toggleTodayGoal; $('#todayGoalBox').onclick = e => { if (e.target.id === 'completeTodayGoal') toggleTodayGoal(); if (e.target.id === 'startTodaySprint') startSprint(); if (e.target.dataset.carryDone) { const rec = todayRecord(), item = rec.carriedItems.find(x => x.id === e.target.dataset.carryDone); if (item) item.completed = true; save(KEYS.todayGoals, state.todayGoals); renderToday(); updateDashboard() } }; $('#eventForm').onsubmit = e => { e.preventDefault(); const start = $('#eventStart').value, end = $('#eventEnd').value; if (end && timeToMinutes(end) <= timeToMinutes(start)) { alert('End time must be after start time.'); return } state.events.push({ id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()), title: $('#eventTitle').value.trim(), date: $('#eventDate').value, type: $('#eventType').value, start, end: end || '', goalId: $('#eventGoalLink').value }); save(KEYS.events, state.events); e.target.reset(); $('#eventDate').value = dateKey(new Date()); renderToday() }; $('#dayTimeline').onclick = e => { if (e.target.dataset.eventDel) { state.events = state.events.filter(x => x.id !== e.target.dataset.eventDel); save(KEYS.events, state.events); renderToday() } }; $('#rolloverList').onclick = e => { if (e.target.dataset.rollMove) moveRolloverToToday(e.target.dataset.rollMove); if (e.target.dataset.rollArchive) archiveRollover(e.target.dataset.rollArchive) }; $('#jumpNow').onclick = () => { $('#dayTimeline').scrollTo({ top: Math.max(0, new Date().getHours() * 60 - 180), behavior: 'smooth' }) }; $('#goalForm').onsubmit = e => { e.preventDefault(); const date = $('#goalDate').value, h = $('#goalHorizon').value; state.goals.push({ id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()), title: $('#goalTitle').value.trim(), date, createdAt: new Date().toISOString(), category: $('#goalCategory').value, horizon: h === 'auto' ? termFromDate(date) : h, type: $('#goalType').value, metric: $('#goalMetric').value.trim(), urgency: $('#goalUrgency').value, energy: $('#goalEnergy').value, firstStep: $('#goalStep').value.trim(), reward: $('#goalReward').value.trim(), parentId: $('#goalParent').value }); save(KEYS.goals, state.goals); renderGoals(); e.target.reset() }; $('#goalList').onclick = e => { if (e.target.dataset.del) { e.stopPropagation(); state.goals = state.goals.filter(g => g.id !== e.target.dataset.del); save(KEYS.goals, state.goals); renderGoals(); return } const c = e.target.closest('[data-goal]'); if (c) openGoalDetail(c.dataset.goal) }; $('#goalFilters').onclick = e => { if (e.target.dataset.filter) { goalFilter = e.target.dataset.filter; $$('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === goalFilter)); renderGoals() } }; $('#homeSaveReflection').onclick = () => saveTodayReflection($('#homeReflectionText').value); $('#saveReflection').onclick = () => saveTodayReflection($('#reflectionText').value); $('#refreshQuote').onclick = () => fetchRandomQuote(); $('#focusNewQuote').onclick = () => fetchRandomQuote(); $('#refreshQuotePage').onclick = () => fetchRandomQuote(); $('#saveQuoteDashboard').onclick = saveCurrentQuote; $('#saveQuotePage').onclick = saveCurrentQuote; $('#savedQuotesGrid').onclick = e => { const id = e.target.dataset.deleteQuote || e.target.dataset.copyQuote; if (!id) return; const q = state.savedQuotes.find(x => x.id === id); if (e.target.dataset.deleteQuote) { state.savedQuotes = state.savedQuotes.filter(x => x.id !== id); save(KEYS.savedQuotes, state.savedQuotes); renderSavedQuotes() } if (e.target.dataset.copyQuote && q) { navigator.clipboard?.writeText(`“${q.text}” — ${q.author || 'Unknown'}`) } }; $('#openSettings').onclick = openSettings; $('#closeSettings').onclick = closeSettings; $('#settingsModal').onclick = e => { if (e.target.id === 'settingsModal') closeSettings() }; $('#settingsForm').onsubmit = e => { e.preventDefault(); saveProfileFrom($('#settingsName').value, $('#settingsBirth').value, $('#settingsLifespan').value, $('#settingsWeekStart').value); applyTheme($('#settingsTheme').value); closeSettings() }; $('#settingsTheme').onchange = e => applyTheme(e.target.value); $('#syncLogin').onclick = sendMagicLink; $('#syncNow').onclick = syncNow; $('#syncLogout').onclick = disconnectSync; $('#quickTheme').onclick = () => { const t = ['midnight', 'solar', 'forest', 'light', 'mono']; applyTheme(t[(t.indexOf(state.theme) + 1) % t.length]) }; $('#resetData').onclick = () => { if (confirm('Reset all Finite data in this browser?')) { Object.values(KEYS).forEach(k => localStorage.removeItem(k)); location.reload() } }; $('#toggleWeeks').onclick = () => { $('#weekGrid').classList.toggle('expanded'); $('#toggleWeeks').textContent = $('#weekGrid').classList.contains('expanded') ? 'Collapse grid' : 'Expand grid' }; $('#openFocus').onclick = openFocus; $('#mobileFocus').onclick = openFocus; $('#mobileSettings').onclick = openSettings; $('#closeFocus').onclick = closeFocus; $('#exportDashboard').onclick = exportSnapshot; $('#copySummary').onclick = copySummary; $('#closeGoalDetail').onclick = closeGoalDetail; $('#goalModal').onclick = e => { if (e.target.id === 'goalModal') closeGoalDetail() }; $$('.unit-switch button').forEach(b => b.onclick = () => { activeGoalUnit = b.dataset.unit; renderGoalDetail() }); $('#startSprint').onclick = startSprint; document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeSettings(); closeFocus(); closeGoalDetail() } }) }
+        load(); bind(); renderReflection(); renderGoals(); renderWeekGrid(); renderToday(); loadCachedQuote(); renderSavedQuotes(); scheduleQuoteRefresh(); initSupabase(); updateDashboard(); showPage(); updateFocusTimer(); setInterval(() => { updateDashboard(); updateFocusTimer(); if (location.hash === '#today') renderToday() }, 1000);
+    </script>
+    <style id="finite-v8-style">
+        [data-theme=sepia] {
+            --bg: #f4ecd8;
+            --surface: #fff7e6;
+            --card: rgba(118, 77, 28, .07);
+            --card2: rgba(255, 250, 235, .94);
+            --border: rgba(85, 60, 35, .18);
+            --border2: rgba(85, 60, 35, .32);
+            --text: #2f2419;
+            --sub: #665542;
+            --muted: #887663;
+            --accent: #b7791f;
+            --accent2: #d97706;
+            --accent3: #4d7c0f;
+            --danger: #b91c1c;
+            --warn: #ca8a04;
+            --shadow: rgba(74, 49, 22, .14)
+        }
+
+        [data-theme=lavender] {
+            --bg: #0c0b14;
+            --surface: #151323;
+            --card: rgba(196, 181, 253, .07);
+            --card2: rgba(196, 181, 253, .12);
+            --border: rgba(221, 214, 254, .16);
+            --border2: rgba(221, 214, 254, .28);
+            --text: #faf7ff;
+            --sub: #c4b5fd;
+            --muted: #8b7ab8;
+            --accent: #a78bfa;
+            --accent2: #f0abfc;
+            --accent3: #86efac
+        }
+
+        [data-theme=ocean] {
+            --bg: #061018;
+            --surface: #0b1b26;
+            --card: rgba(125, 211, 252, .065);
+            --card2: rgba(125, 211, 252, .11);
+            --border: rgba(186, 230, 253, .15);
+            --border2: rgba(186, 230, 253, .3);
+            --text: #f0fbff;
+            --sub: #a6d8ee;
+            --muted: #76a9bf;
+            --accent: #38bdf8;
+            --accent2: #2dd4bf;
+            --accent3: #a3e635
+        }
+
+        [data-theme=sage] {
+            --bg: #07110c;
+            --surface: #101c15;
+            --card: rgba(187, 247, 208, .06);
+            --card2: rgba(187, 247, 208, .11);
+            --border: rgba(187, 247, 208, .15);
+            --border2: rgba(187, 247, 208, .28);
+            --text: #f3fff7;
+            --sub: #b7dbc2;
+            --muted: #7fa68c;
+            --accent: #34d399;
+            --accent2: #84cc16;
+            --accent3: #38bdf8
+        }
+
+        [data-theme=mist] {
+            --bg: #eef4f2;
+            --surface: #fff;
+            --card: rgba(255, 255, 255, .72);
+            --card2: rgba(255, 255, 255, .95);
+            --border: rgba(44, 62, 55, .14);
+            --border2: rgba(44, 62, 55, .25);
+            --text: #18211d;
+            --sub: #4e625a;
+            --muted: #788a83;
+            --accent: #0f766e;
+            --accent2: #2563eb;
+            --accent3: #65a30d
+        }
+
+        input[type=date]::-webkit-calendar-picker-indicator,
+        input[type=time]::-webkit-calendar-picker-indicator {
+            filter: invert(1) brightness(1.9);
+            opacity: .92
+        }
+
+        [data-theme=light] input[type=date]::-webkit-calendar-picker-indicator,
+        [data-theme=light] input[type=time]::-webkit-calendar-picker-indicator,
+        [data-theme=sepia] input[type=date]::-webkit-calendar-picker-indicator,
+        [data-theme=sepia] input[type=time]::-webkit-calendar-picker-indicator,
+        [data-theme=mist] input[type=date]::-webkit-calendar-picker-indicator,
+        [data-theme=mist] input[type=time]::-webkit-calendar-picker-indicator {
+            filter: none;
+            opacity: .75
+        }
+
+        #openFocus {
+            display: none !important
+        }
+
+        .stat {
+            position: relative;
+            padding-bottom: 34px !important
+        }
+
+        .pin-card {
+            position: absolute;
+            right: 16px;
+            bottom: 14px;
+            padding: 6px 9px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--card);
+            color: var(--sub);
+            z-index: 3
+        }
+
+        .pin-card.active {
+            color: #fff;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border: 0
+        }
+
+        .pin-zone {
+            display: none;
+            margin: 20px 0
+        }
+
+        .pin-zone.show {
+            display: block
+        }
+
+        .pin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px
+        }
+
+        .pin-mini {
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: linear-gradient(135deg, var(--card2), var(--card))
+        }
+
+        .pin-mini .val {
+            font: 30px var(--mono);
+            color: var(--text);
+            letter-spacing: -.05em
+        }
+
+        .pro-grid {
+            display: grid;
+            grid-template-columns: .86fr 1.14fr;
+            gap: 16px
+        }
+
+        .pro-panel {
+            padding: 22px
+        }
+
+        .kpi-grid2 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 16px
+        }
+
+        .kpi2 {
+            padding: 14px;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            background: var(--card)
+        }
+
+        .kpi2 strong {
+            display: block;
+            font: 24px var(--mono);
+            color: var(--text)
+        }
+
+        .focus-timer2 {
+            font: clamp(52px, 10vw, 116px) var(--mono);
+            letter-spacing: -.08em
+        }
+
+        .heat-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            align-items: flex-start
+        }
+
+        .heat-box {
+            display: inline-block;
+            padding: 14px;
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            background: var(--card);
+            height: auto !important;
+            min-height: 0 !important;
+            width: auto !important
+        }
+
+        .heat-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 10px
+        }
+
+        .heat-grid2 {
+            display: grid;
+            gap: 6px;
+            width: max-content
+        }
+
+        .heat-grid2.m {
+            grid-template-columns: repeat(15, 18px)
+        }
+
+        .heat-grid2.w {
+            grid-template-columns: repeat(7, 52px)
+        }
+
+        .heat-cell2 {
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: color-mix(in srgb, var(--surface) 82%, transparent);
+            display: grid;
+            place-items: center;
+            position: relative;
+            overflow: hidden;
+            font: 10px var(--mono);
+            color: var(--muted)
+        }
+
+        .heat-grid2.m .heat-cell2 {
+            width: 18px;
+            height: 18px;
+            border-radius: 5px;
+            font-size: 0
+        }
+
+        .heat-cell2:after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: var(--h);
+            background: linear-gradient(180deg, var(--accent), var(--accent2));
+            opacity: .92
+        }
+
+        .heat-cell2 span {
+            z-index: 1;
+            text-align: center
+        }
+
+        .today-cell {
+            box-shadow: 0 0 0 2px var(--accent3)
+        }
+
+        .seg .active {
+            color: #fff;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border: 0
+        }
+
+        .session-list,
+        .week-list {
+            display: grid;
+            gap: 10px
+        }
+
+        .session-row2,
+        .week-item {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            background: var(--card)
+        }
+
+        .actions2 {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap
+        }
+
+        .brain-pro {
+            padding: 20px;
+            border: 1px solid color-mix(in srgb, var(--accent3) 35%, var(--border));
+            border-radius: 26px;
+            background: radial-gradient(circle at 0 0, color-mix(in srgb, var(--accent3) 18%, transparent), transparent 38%), linear-gradient(135deg, var(--card2), var(--card));
+            margin-bottom: 18px
+        }
+
+        .brain-pro textarea {
+            min-height: 145px;
+            font-size: 16px
+        }
+
+        .modalx {
+            position: fixed;
+            inset: 0;
+            display: none;
+            place-items: center;
+            background: rgba(0, 0, 0, .58);
+            z-index: 200;
+            padding: 18px;
+            backdrop-filter: blur(12px)
+        }
+
+        .modalx.open {
+            display: grid
+        }
+
+        .modalx-card {
+            width: min(760px, 100%);
+            max-height: 88vh;
+            overflow: auto;
+            padding: 24px
+        }
+
+        .saved-layout2 {
+            display: grid;
+            grid-template-columns: .75fr 1.25fr;
+            gap: 16px
+        }
+
+        .slot-board2 {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px
+        }
+
+        .slot2 {
+            padding: 15px;
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            background: linear-gradient(180deg, var(--card2), var(--card));
+            min-height: 188px
+        }
+
+        .slot2.full {
+            border-color: color-mix(in srgb, var(--warn) 48%, var(--border))
+        }
+
+        .slot-cell2 {
+            padding: 11px;
+            border: 1px dashed var(--border);
+            border-radius: 16px;
+            min-height: 68px;
+            background: color-mix(in srgb, var(--surface) 70%, transparent);
+            margin-top: 8px;
+            color: var(--muted)
+        }
+
+        .slot-cell2.filled {
+            border-style: solid;
+            color: var(--text);
+            cursor: pointer
+        }
+
+        .saved-list2 {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 14px
+        }
+
+        .saved-card2 {
+            padding: 15px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: var(--card);
+            display: grid;
+            gap: 8px
+        }
+
+        .lock2 {
+            padding: 14px;
+            border: 1px dashed color-mix(in srgb, var(--warn) 50%, var(--border));
+            border-radius: 18px;
+            background: color-mix(in srgb, var(--warn) 8%, transparent);
+            margin: 12px 0
+        }
+
+        @media(max-width:900px) {
+
+            .pro-grid,
+            .saved-layout2 {
+                grid-template-columns: 1fr
+            }
+
+            .kpi-grid2 {
+                grid-template-columns: repeat(2, 1fr)
+            }
+
+            .slot-board2 {
+                grid-template-columns: repeat(2, 1fr)
+            }
+        }
+
+        @media(max-width:600px) {
+
+            .kpi-grid2,
+            .slot-board2,
+            .saved-list2 {
+                grid-template-columns: 1fr
+            }
+
+            .heat-grid2.w {
+                grid-template-columns: repeat(7, 40px)
+            }
+
+            .heat-cell2 {
+                width: 40px;
+                height: 40px
+            }
+        }
+    </style>
+    <script id="finite-v8-script">
+        (function () {
+            const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => Array.from(r.querySelectorAll(s)); const uid = () => crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()); const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); const ISO = () => new Date().toISOString(), DAY = 86400000, tdy = () => dateKey(new Date()); const live = () => typeof sprintUntil !== 'undefined' && sprintUntil && sprintUntil > Date.now();
+            Object.assign(KEYS, { savedItems: 'finite_saved_items_v8', focusSessions: 'finite_focus_sessions_v8', focusHeat: 'finite_focus_heat_v8', focusPrefs: 'finite_focus_prefs_v8', pins: 'finite_pins_v8', weekend: 'finite_weekend_v8' });
+            state.savedItems = readJSON(KEYS.savedItems, null) || readJSON('finite_saved_items_v7', null) || []; state.focusSessions = readJSON(KEYS.focusSessions, null) || readJSON('finite_focus_sessions_v7', null) || []; state.focusHeat = readJSON(KEYS.focusHeat, null) || readJSON('finite_focus_heat_v7', {}); state.focusPrefs = readJSON(KEYS.focusPrefs, { weekMode: 'last7', duration: 25 }); state.pins = readJSON(KEYS.pins, null) || readJSON('finite_pinned_widgets_v7', []); state.weekend = readJSON(KEYS.weekend, null) || readJSON('finite_weekend_goals_v7', null) || [];
+            const SLOT = ['YouTube', 'Blogs', 'Books', 'Courses', 'Movies', 'TV Shows', 'Podcasts', 'Music', 'Games'], CATS = ['Brain Dump', 'Ideas', 'Learning', 'Career', 'Coding', 'Telecom', 'Health', 'Finance', 'Personal', 'Tools', 'Notes', 'Random Links', 'Articles', 'Documents', 'Other'], TYPES = ['Thought', 'Idea', 'Note', 'Link', 'YouTube Video', 'Blog', 'Article', 'Book', 'Course', 'Movie', 'TV Show', 'Podcast', 'Music', 'Tool', 'Document', 'Other']; let savedStatus = 'all', savedBucket = 'all', audioCtx = null, audioNodes = [], activeWeekend = null;
+            function saveAll() { save(KEYS.savedItems, state.savedItems); save(KEYS.focusSessions, state.focusSessions); save(KEYS.focusHeat, state.focusHeat); save(KEYS.focusPrefs, state.focusPrefs); save(KEYS.pins, state.pins); save(KEYS.weekend, state.weekend) } function bucket(x) { let r = [x.bucket, x.category, x.type, x.url, (x.tags || []).join(' ')].join(' ').toLowerCase(); if (/youtu|youtube|youtu\.be|\byt\b/.test(r)) return 'YouTube'; if (/blog|medium|substack/.test(r)) return 'Blogs'; if (/book|kindle/.test(r)) return 'Books'; if (/course|udemy|coursera/.test(r)) return 'Courses'; if (/movie|film/.test(r)) return 'Movies'; if (/tv show|series/.test(r)) return 'TV Shows'; if (/podcast/.test(r)) return 'Podcasts'; if (/music|song|playlist/.test(r)) return 'Music'; if (/game/.test(r)) return 'Games'; return x.category || 'Other' } const cur = b => state.savedItems.filter(x => x.status === 'current' && bucket(x) === b), full = b => SLOT.includes(b) && cur(b).length >= 2, can = x => !SLOT.includes(bucket(x)) || cur(bucket(x)).length < 2; function actual(s) { if (s.status === 'started' && !s.endedAt) return Math.max(0, Math.floor((Date.now() - new Date(s.startedAt)) / 60000)); if (s.endedAt) return Math.max(1, Math.round((new Date(s.endedAt) - new Date(s.startedAt)) / 60000)); return Number(s.actualMinutes || s.duration || 0) } function norm() { state.savedItems = (state.savedItems || []).map(x => ({ ...x, id: x.id || uid(), status: x.status || 'inbox', bucket: bucket(x), tags: Array.isArray(x.tags) ? x.tags : [] })); state.weekend = (state.weekend || []).map(x => typeof x === 'string' ? { id: uid(), text: x, status: 'open', createdAt: ISO() } : ({ ...x, id: x.id || uid(), status: x.status || 'open' })); saveAll() }
+            function nav() { let top = $('#topNav'); if (top) top.innerHTML = '<a href="#dashboard" data-page-link="dashboard">Dashboard</a><a href="#today" data-page-link="today">Today</a><a href="#focus" data-page-link="focus">Focus</a><a href="#goals" data-page-link="goals">Goals</a><a href="#saved" data-page-link="saved">Saved</a><a href="#reflection" data-page-link="reflection">Reflect</a><a href="#quotes" data-page-link="quotes">Quotes</a>'; let theme = $('#settingsTheme'); if (theme) ['sepia', 'lavender', 'ocean', 'sage', 'mist'].forEach(t => { if (!theme.querySelector(`[value="${t}"]`)) theme.insertAdjacentHTML('beforeend', `<option value="${t}">${t[0].toUpperCase() + t.slice(1)}</option>`) }); }
+            function pinDock() { let d = $('#dashboard'); if (!d) return; if (!$('#pinDock')) d.insertAdjacentHTML('afterbegin', '<section class="pin-zone" id="pinDock"><div class="section-head"><div><div class="pill">Pinned widgets</div><p class="meta">Pinned metrics stay above the greeting.</p></div></div><div class="pin-grid" id="pinGrid"></div></section>');['life', 'year', 'month', 'week', 'day'].forEach(k => { let el = $('#' + k + 'Metric')?.closest('.stat'); if (el && !el.querySelector('.pin-card')) el.insertAdjacentHTML('beforeend', `<button class="pin-card" data-pin="${k}">📌</button>`) }); let now = $('#nowTime')?.closest('.stat'); if (now && !now.querySelector('.pin-card')) now.insertAdjacentHTML('beforeend', '<button class="pin-card" data-pin="now">📌</button>'); renderPins() }
+            function renderPins() { let grid = $('#pinGrid'), dock = $('#pinDock'); if (!grid || !dock) return; $('.pin-card'); $$('.pin-card').forEach(b => b.classList.toggle('active', state.pins.includes(b.dataset.pin))); dock.classList.toggle('show', state.pins.length > 0); let m = { life: ['Life', $('#lifeMetric')?.textContent, $('#lifeMeta')?.textContent], year: ['Year', $('#yearMetric')?.textContent, $('#yearMeta')?.textContent], month: ['Month', $('#monthMetric')?.textContent, $('#monthMeta')?.textContent], week: ['Week', $('#weekMetric')?.textContent, $('#weekMeta')?.textContent], day: ['Today', $('#dayMetric')?.textContent, $('#dayMeta')?.textContent], now: ['Now', $('#nowTime')?.textContent, $('#nowDate')?.textContent] }; grid.innerHTML = state.pins.map(k => `<article class="pin-mini"><strong>${esc(m[k]?.[0] || k)} <button class="icon-btn" data-unpin="${k}">Unpin</button></strong><div class="val">${esc(m[k]?.[1] || '—')}</div><p class="meta">${esc(m[k]?.[2] || '')}</p></article>`).join('') }
+            function injectWeekend() { let st = $('#dashboard .stack'); if (!st || $('#weekendGoalsCard')) return; ($('#todayGoalHomeCard') || st.firstElementChild).insertAdjacentHTML('afterend', `<section class="card full-card" id="weekendGoalsCard"><div class="section-head"><div><h2>Weekend wants</h2><p>Up to 5 small life-things you may want to do. Not a productivity list.</p></div><div class="actions2"><button class="btn" id="whist">History</button><button class="btn primary" id="wadd">Add</button><span class="tag" id="wcount">0/5</span></div></div><div class="week-list" id="wlist"></div></section>`); document.body.insertAdjacentHTML('beforeend', `<div class="modalx" id="wmodal"><div class="card modalx-card"><div class="modal-head"><h2>Add weekend want</h2><button class="icon-btn" id="wclose">Close</button></div><form class="form-grid" id="wform"><label>What do you want to do?<input id="wtext" required></label><div class="goal-extra"><label>Date optional<input id="wdate" type="date"></label><label>Time optional<input id="wtime" type="time"></label></div><button class="btn primary">Save</button></form></div></div><div class="modalx" id="wreflect"><div class="card modalx-card"><div class="modal-head"><h2>How was it?</h2><button class="icon-btn" id="rclose">Close</button></div><form class="form-grid" id="rform"><label>What did you enjoy?<textarea id="renjoy"></textarea></label><label>How did you feel?<textarea id="rfeel"></textarea></label><button class="btn primary">Save reflection</button></form></div></div><div class="modalx" id="whmodal"><div class="card modalx-card"><div class="modal-head"><h2>Weekend history</h2><button class="icon-btn" id="hclose">Close</button></div><div class="week-list" id="whlist"></div></div></div>`); bindWeekend(); renderWeekend() }
+            function renderWeekend() { if (!$('#wlist')) return; let open = state.weekend.filter(x => x.status === 'open'); $('#wcount').textContent = `${open.length}/5`; $('#wlist').innerHTML = open.length ? open.map(x => `<div class="week-item"><div><strong>${esc(x.text)}</strong><p class="meta">${x.date || 'No date'}${x.time ? ' · ' + x.time : ''}</p></div><div class="actions2"><button class="btn primary" data-wdone="${x.id}">Done</button><button class="btn" data-wmiss="${x.id}">Missed</button><button class="delete" data-wdel="${x.id}">Delete</button></div></div>`).join('') : '<div class="empty">Add up to 5 weekend wants.</div>' } function bindWeekend() { $('#wadd').onclick = () => { $('#wform').reset(); $('#wmodal').classList.add('open') }; $('#wclose').onclick = () => $('#wmodal').classList.remove('open'); $('#wform').onsubmit = e => { e.preventDefault(); if (state.weekend.filter(x => x.status === 'open').length >= 5) return alert('Max 5'); state.weekend.push({ id: uid(), text: $('#wtext').value, date: $('#wdate').value, time: $('#wtime').value, status: 'open', createdAt: ISO() }); saveAll(); $('#wmodal').classList.remove('open'); renderWeekend() }; $('#wlist').onclick = e => { let wid = e.target.dataset.wdone || e.target.dataset.wmiss || e.target.dataset.wdel; if (!wid) return; let x = state.weekend.find(i => i.id === wid); if (e.target.dataset.wdel) state.weekend = state.weekend.filter(i => i.id !== wid); else if (x) { x.status = e.target.dataset.wdone ? 'done' : 'missed'; x.closedAt = ISO(); if (e.target.dataset.wdone) { activeWeekend = wid; $('#rform').reset(); $('#wreflect').classList.add('open') } } saveAll(); renderWeekend() }; $('#whist').onclick = () => { let items = state.weekend.filter(x => x.status !== 'open'); $('#whlist').innerHTML = items.length ? items.map(x => `<div class="week-item"><div><strong>${esc(x.text)}</strong><p class="meta">${x.status} · ${x.closedAt ? new Date(x.closedAt).toLocaleString() : ''}</p><p class="meta">${esc(x.enjoy || '')}</p><p class="meta">${esc(x.feel || '')}</p></div></div>`).join('') : '<div class="empty">No history.</div>'; $('#whmodal').classList.add('open') }; $('#hclose').onclick = () => $('#whmodal').classList.remove('open'); $('#rclose').onclick = () => $('#wreflect').classList.remove('open'); $('#rform').onsubmit = e => { e.preventDefault(); let x = state.weekend.find(i => i.id === activeWeekend); if (x) { x.enjoy = $('#renjoy').value; x.feel = $('#rfeel').value; saveAll() } $('#wreflect').classList.remove('open') } }
+            function injectPages() { let main = $('main.shell'); if (!main) return; $('#focus')?.remove(); $('#saved')?.remove(); let opts = TYPES.map(x => `<option>${x}</option>`).join(''), cats = [...SLOT, ...CATS].map(x => `<option>${x}</option>`).join(''); main.insertAdjacentHTML('beforeend', `<section class="page" id="focus" data-page="focus"><div class="section-head"><div><div class="pill">Advanced Focus</div><h2>Focus mode</h2><p>Actual focus tracking, compact heatmaps, history-safe analytics and calming sounds.</p></div><div class="actions2"><button class="btn" id="fhist">🕘 History</button><span class="tag" id="fstatus">Ready</span></div></div><div class="kpi-grid2" id="fkpi"></div><div class="pro-grid"><section class="card pro-panel"><h3>Start focus</h3><form class="form-grid" id="fform"><label>Target<select id="ftarget"></select></label><label>Outcome<input id="fout" placeholder="What will be done?"></label><div class="goal-extra"><label>Duration<select id="fdur"><option>10</option><option selected>25</option><option>45</option><option>60</option><option>90</option></select></label><label>Sound<select id="fsound"><option>None</option><option>Brown noise</option><option>Pink noise</option><option>Rain noise</option><option>Forest ambience</option><option>Cafe hum</option><option>ADHD bilateral pulse</option><option>40Hz focus tone</option><option>Soft pulse</option></select></label></div><label>Brain dump<textarea id="fdump"></textarea></label><div class="actions2"><button class="btn primary">Start focus</button><button class="btn" id="playSound" type="button">Play sound</button><button class="btn" id="stopF" type="button">Stop</button></div></form></section><section class="card pro-panel"><div class="target-box"><span class="tiny">Current target</span><h2 id="ftitle">Pick a target.</h2><p class="meta" id="fmeta">Today, goals and events appear here.</p></div><div class="focus-timer2" id="ftimer">00:00:00</div><h3>Today 10+ min sessions</h3><div class="session-list" id="todaySessions"></div></section></div><section class="card full-card" style="margin-top:16px"><div class="section-head"><div><h2>Focus heatmap</h2><p>Compact, professional, no wasted space.</p></div></div><div class="heat-wrap"><div class="heat-box"><div class="heat-head"><div><h3>Last 30 days</h3><p class="meta">Darker = more focus.</p></div></div><div class="heat-grid2 m" id="heat30"></div></div><div class="heat-box"><div class="heat-head"><div><h3 id="weekTitle">Last 7 days</h3><p class="meta">Fixed cells only.</p></div><div class="seg"><button class="btn active" id="last7">Last 7</button><button class="btn" id="weekmode">Current week</button></div></div><div class="heat-grid2 w" id="heatWeek"></div></div></div></section></section><section class="page" id="saved" data-page="saved"><div class="section-head"><div><div class="pill">Saved OS</div><h2>Capture now. Consume intentionally.</h2></div><button class="btn primary" id="brainJump">Quick brain dump</button></div><div class="kpi-grid2" id="savedStats"></div><div class="saved-layout2"><section class="card pro-panel"><div class="brain-pro"><div class="pill">Fast capture</div><h2>Brain dump</h2><p class="meta">Drop thoughts quickly. Saved into Brain Dump.</p><textarea id="brainQuick"></textarea><div class="actions2"><button class="btn primary" id="saveBrain">Save thought</button><button class="btn" id="clearBrain">Clear</button></div></div><h3>Save item</h3><form class="form-grid" id="sform"><label>Link<input id="surl"></label><label>Title<input id="stitle" required></label><div class="goal-extra"><label>Type<select id="stype">${opts}</select></label><label>Category<select id="scat">${cats}</select></label></div><label>Tags<input id="stags" placeholder="comma separated"></label><label>Notes<textarea id="snotes"></textarea></label><button class="btn primary">Save</button></form></section><section class="card pro-panel"><h2>2-slot board</h2><div class="slot-board2" id="slotBoard"></div></section></div><section class="card full-card" style="margin-top:16px"><div class="section-head"><div><h2>Inbox and backlog</h2><p>Full buckets are hidden completely.</p></div><span class="tag" id="savedLabel">All</span></div><div class="actions2" id="statusFilters"></div><div class="actions2" id="bucketFilters" style="margin-top:10px"></div><div id="hiddenBuckets"></div><div class="saved-list2" id="savedList"></div></section></section>`); document.body.insertAdjacentHTML('beforeend', `<div class="modalx" id="fhmodal"><div class="card modalx-card"><div class="modal-head"><div><span class="tag" id="fhcount">History</span><h2>Focus history</h2><p class="meta">Clearing history keeps heatmap totals.</p></div><button class="icon-btn" id="fhclose">Close</button></div><button class="btn danger-btn" id="fclear">Clear history list</button><div class="session-list" id="fhlist" style="margin-top:12px"></div></div></div><div class="modalx" id="smodal"><div class="card modalx-card"><div class="modal-head"><div><span class="tag" id="smtag">Saved</span><h2 id="smtitle"></h2></div><button class="icon-btn" id="smclose">Close</button></div><a id="smlink" class="url-text" target="_blank"></a><p class="detail-note" id="smnotes"></p><button class="btn primary" id="smdone">Mark done</button></div></div>`) }
+            function heatAdd(s) { let k = dateKey(new Date(s.startedAt)); state.focusHeat[k] = Number(state.focusHeat[k] || 0) + actual(s) } function mins(k) { return Number(state.focusHeat[k] || 0) + state.focusSessions.filter(s => s.status === 'started' && dateKey(new Date(s.startedAt)) === k).reduce((a, s) => a + actual(s), 0) } function renderHeat() { if (!$('#heat30')) return; let days = [...Array(30)].map((_, i) => new Date(Date.now() - (29 - i) * DAY)), max = Math.max(30, ...days.map(d => mins(dateKey(d)))); $('#heat30').innerHTML = days.map(d => { let k = dateKey(d), m = mins(k); return `<div class="heat-cell2 ${k === tdy() ? 'today-cell' : ''}" style="--h:${Math.min(100, m / max * 100)}%" title="${k}: ${m}m"><span>${d.getDate()}</span></div>` }).join(''); let start; if (state.focusPrefs.weekMode === 'week') { let d = new Date(), diff = (d.getDay() + 6) % 7; start = new Date(d.getFullYear(), d.getMonth(), d.getDate() - diff); $('#weekTitle').textContent = 'Current week' } else { start = new Date(Date.now() - 6 * DAY); $('#weekTitle').textContent = 'Last 7 days' } let wk = [...Array(7)].map((_, i) => new Date(start.getTime() + i * DAY)); $('#heatWeek').innerHTML = wk.map(d => { let k = dateKey(d), m = mins(k); return `<div class="heat-cell2 ${k === tdy() ? 'today-cell' : ''}" style="--h:${Math.min(100, m / max * 100)}%"><span>${d.toLocaleDateString(undefined, { weekday: 'short' })}<br>${m}m</span></div>` }).join(''); let total = days.reduce((a, d) => a + mins(dateKey(d)), 0), view = wk.reduce((a, d) => a + mins(dateKey(d)), 0), best = Math.max(0, ...days.map(d => mins(dateKey(d)))); $('#fkpi').innerHTML = [['30d actual', total + 'm'], ['View actual', view + 'm'], ['Streak', streak() + 'd'], ['Best day', best + 'm']].map(x => `<div class="kpi2"><span class="tiny">${x[0]}</span><strong>${x[1]}</strong></div>`).join(''); $('#last7').classList.toggle('active', state.focusPrefs.weekMode !== 'week'); $('#weekmode').classList.toggle('active', state.focusPrefs.weekMode === 'week') } function streak() { let n = 0, d = new Date(); while (mins(dateKey(d)) > 0) { n++; d = new Date(d.getTime() - DAY) } return n }
+            function targets() { let sel = $('#ftarget'); if (!sel) return; let o = ['<option value="manual">Manual focus</option>'], tg = state.todayGoals[tdy()]; if (tg?.title) o.push(`<option value="today:${tdy()}">Today · ${esc(tg.title)}</option>`); state.goals.forEach(g => o.push(`<option value="goal:${g.id}">Goal · ${esc(g.title)}</option>`)); state.events.filter(e => e.date >= tdy()).forEach(ev => o.push(`<option value="event:${ev.id}">Event · ${esc(ev.title)}</option>`)); let old = sel.value; sel.innerHTML = o.join(''); if ([...sel.options].some(x => x.value === old)) sel.value = old } function tinfo(v) { if (!v || v === 'manual') return { title: $('#fout')?.value || 'Manual focus', meta: 'No linked target' }; let [k, i] = v.split(':'); if (k === 'today') return { title: state.todayGoals[i]?.title || 'Today', meta: state.todayGoals[i]?.doneText || '' }; if (k === 'goal') { let g = state.goals.find(x => x.id === i); return { title: g?.title || 'Goal', meta: g ? `Due ${g.date}` : '' } } if (k === 'event') { let e = state.events.find(x => x.id === i); return { title: e?.title || 'Event', meta: e ? `${e.date} ${e.start || ''}` : '' } } return { title: 'Focus', meta: '' } }
+            function renderFocus() { if (!$('#ftimer')) return; targets(); $('#fstatus').textContent = live() ? 'Live' : 'Ready'; if (!live()) { let d = dayStats(); $('#ftimer').textContent = `${String(d.hours).padStart(2, '0')}:${String(d.minutes).padStart(2, '0')}:${String(d.seconds).padStart(2, '0')}` } let info = tinfo($('#ftarget').value); $('#ftitle').textContent = info.title; $('#fmeta').textContent = info.meta; let arr = state.focusSessions.filter(s => dateKey(new Date(s.startedAt)) === tdy() && actual(s) >= 10); $('#todaySessions').innerHTML = arr.length ? arr.map(s => `<div class="session-row2"><div><strong>${esc(s.title)}</strong><p class="meta">${actual(s)}m actual · ${new Date(s.startedAt).toLocaleTimeString()}</p></div><span class="tag">${s.status}</span></div>`).join('') : '<div class="empty">No 10+ minute sessions today yet.</div>'; renderHeat() } function renderFHist() { let all = [...state.focusSessions].sort((a, b) => new Date(b.startedAt) - new Date(a.startedAt)); $('#fhcount').textContent = `${all.length} sessions`; $('#fhlist').innerHTML = all.length ? all.map(s => `<div class="session-row2"><div><strong>${esc(s.title)}</strong><p class="meta">${actual(s)}m actual · planned ${s.duration}m · ${new Date(s.startedAt).toLocaleString()}</p></div><span class="tag">${s.status}</span></div>`).join('') : '<div class="empty">No focus history.</div>' }
+            function tick() { if (!$('#ftimer')) return; if (live()) { let r = Math.max(0, sprintUntil - Date.now()), h = Math.floor(r / 3600000), m = Math.floor((r % 3600000) / 60000), s = Math.floor((r % 60000) / 1000); $('#ftimer').textContent = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`; if (r <= 0) endFocus() } else { let d = dayStats(); $('#ftimer').textContent = `${String(d.hours).padStart(2, '0')}:${String(d.minutes).padStart(2, '0')}:${String(d.seconds).padStart(2, '0')}` } } function stopSound() { audioNodes.forEach(n => { try { n.stop && n.stop(); n.disconnect && n.disconnect() } catch { } }); audioNodes = [] } function playSound() { let type = $('#fsound')?.value || 'None'; stopSound(); if (type === 'None') return; audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); let gain = audioCtx.createGain(); gain.gain.value = .035; gain.connect(audioCtx.destination); audioNodes.push(gain); let noise = brown => { let buf = audioCtx.createBuffer(1, audioCtx.sampleRate * 2, audioCtx.sampleRate), data = buf.getChannelData(0), last = 0; for (let i = 0; i < data.length; i++) { let w = Math.random() * 2 - 1; last = brown ? (last + .02 * w) / 1.02 : w; data[i] = brown ? last * 3.5 : w * .55 } let src = audioCtx.createBufferSource(); src.buffer = buf; src.loop = true; src.connect(gain); src.start(); audioNodes.push(src) }; if (/noise|Rain|Forest|Cafe/.test(type)) noise(type === 'Brown noise' || type === 'Rain noise' || type === 'Forest ambience'); else { let o = audioCtx.createOscillator(); o.frequency.value = type === '40Hz focus tone' ? 40 : type === 'ADHD bilateral pulse' ? 110 : 174; o.connect(gain); o.start(); audioNodes.push(o) } } function startFocus(e) { e.preventDefault(); let dur = Number($('#fdur').value || 25), info = tinfo($('#ftarget').value), dump = $('#fdump').value.trim(); if (dump) { quickBrain(dump, 'Focus brain dump'); $('#fdump').value = '' } sprintUntil = Date.now() + dur * 60000; state.focusSessions.push({ id: uid(), title: info.title, meta: info.meta, duration: dur, status: 'started', startedAt: ISO() }); saveAll(); $('#focusTitle').textContent = info.title; $('#focusOverlay').classList.add('open'); playSound(); renderFocus() } function endFocus() { sprintUntil = null; stopSound(); let last = state.focusSessions[state.focusSessions.length - 1]; if (last && last.status === 'started') { last.endedAt = ISO(); last.actualMinutes = actual(last); last.status = 'ended'; heatAdd(last); saveAll() } renderFocus() }
+            function quickBrain(v, src = 'Quick brain dump') { v = String(v || '').trim(); if (!v) return; state.savedItems.unshift({ id: uid(), title: v.length > 90 ? v.slice(0, 90) + '…' : v, type: 'Thought', category: 'Brain Dump', bucket: 'Brain Dump', tags: ['brain-dump'], notes: v + '\n\nSource: ' + src, status: 'inbox', createdAt: ISO() }); saveAll(); renderSaved() } function renderSaved() { if (!$('#savedStats')) return; let total = state.savedItems.length, inbox = state.savedItems.filter(x => x.status === 'inbox').length, current = state.savedItems.filter(x => x.status === 'current').length, done = state.savedItems.filter(x => x.status === 'done').length; $('#savedStats').innerHTML = [['Saved', total], ['Inbox', inbox], ['Current', current], ['Done', done]].map(x => `<div class="kpi2"><span class="tiny">${x[0]}</span><strong>${x[1]}</strong></div>`).join(''); $('#slotBoard').innerHTML = SLOT.map(b => { let it = cur(b).slice(0, 2); return `<article class="slot2 ${it.length >= 2 ? 'full' : ''}"><div class="label-row"><strong>${b}</strong><span class="tag">${it.length}/2</span></div>${[0, 1].map(i => it[i] ? `<div class="slot-cell2 filled" data-open-saved="${it[i].id}"><strong>${esc(it[i].title)}</strong><p class="meta">Click to open</p><button class="btn" data-done-saved="${it[i].id}">Mark done</button></div>` : `<div class="slot-cell2">Empty slot ${i + 1}</div>`).join('')}</article>` }).join(''); let hidden = SLOT.filter(full); if (savedBucket !== 'all' && full(savedBucket)) savedBucket = 'all'; $('#statusFilters').innerHTML = ['all', 'inbox', 'current', 'done'].map(f => `<button class="btn ${savedStatus === f ? 'active' : ''}" data-st="${f}">${f}</button>`).join(''); $('#bucketFilters').innerHTML = ['all', ...SLOT, ...CATS].filter(b => b === 'all' || !full(b)).map(b => `<button class="btn ${savedBucket === b ? 'active' : ''}" data-bu="${esc(b)}">${b}</button>`).join(''); $('#hiddenBuckets').innerHTML = hidden.length ? `<div class="lock2"><strong>Hidden full buckets:</strong> ${hidden.join(', ')}</div>` : ''; let arr = state.savedItems.filter(x => !full(bucket(x))); if (savedStatus !== 'all') arr = arr.filter(x => x.status === savedStatus); if (savedBucket !== 'all') arr = arr.filter(x => bucket(x) === savedBucket); $('#savedList').innerHTML = arr.length ? arr.map(x => `<article class="saved-card2"><div class="label-row"><span class="tag">${bucket(x)}</span><button class="delete" data-del-saved="${x.id}">Delete</button></div><strong>${esc(x.title)}</strong><p class="meta">${esc(x.notes || 'No notes')}</p><div class="actions2"><button class="btn primary" data-start-saved="${x.id}" ${x.status !== 'inbox' || !can(x) ? 'disabled' : ''}>Move current</button><button class="btn" data-done-saved="${x.id}">Done</button></div></article>`).join('') : '<div class="empty" style="grid-column:1/-1">Nothing visible. Full buckets are hidden.</div>' }
+            const oldQuote = fetchRandomQuote; fetchRandomQuote = async function () { let fall = [{ text: 'Make the next action small enough to start.', author: 'Finite' }, { text: 'A clear hour beats a chaotic day.', author: 'Finite' }, { text: 'Protect attention like it is your battery.', author: 'Finite' }]; try { return await Promise.race([oldQuote(), new Promise((_, rej) => setTimeout(() => rej(Error('timeout')), 4500))]) } catch { let q = { ...fall[Math.floor(Math.random() * fall.length)], source: 'Reliable local fallback', fetchedAt: ISO() }; save(KEYS.quoteCache, q); applyQuote(q, q.source); return q } };
+            function bind() { document.addEventListener('click', e => { if (e.target.dataset.pin) { let k = e.target.dataset.pin; state.pins = state.pins.includes(k) ? state.pins.filter(x => x !== k) : [...state.pins, k]; saveAll(); renderPins() } if (e.target.dataset.unpin) { state.pins = state.pins.filter(x => x !== e.target.dataset.unpin); saveAll(); renderPins() } }); $('#settingsTheme')?.addEventListener('change', e => applyTheme(e.target.value)); $('#fform').onsubmit = startFocus; $('#playSound').onclick = playSound; $('#stopF').onclick = endFocus; $('#fhist').onclick = () => { renderFHist(); $('#fhmodal').classList.add('open') }; $('#fhclose').onclick = () => $('#fhmodal').classList.remove('open'); $('#fclear').onclick = () => { if (confirm('Clear focus history? Heatmap stays.')) { state.focusSessions = []; saveAll(); renderFocus(); renderFHist() } }; $('#last7').onclick = () => { state.focusPrefs.weekMode = 'last7'; saveAll(); renderHeat() }; $('#weekmode').onclick = () => { state.focusPrefs.weekMode = 'week'; saveAll(); renderHeat() }; $('#ftarget').onchange = renderFocus; $('#fout').oninput = renderFocus; $('#sform').onsubmit = e => { e.preventDefault(); state.savedItems.unshift({ id: uid(), url: $('#surl').value, title: $('#stitle').value, type: $('#stype').value, category: $('#scat').value, bucket: $('#scat').value, tags: $('#stags').value.split(',').map(x => x.trim()).filter(Boolean), notes: $('#snotes').value, status: 'inbox', createdAt: ISO() }); saveAll(); e.target.reset(); renderSaved() }; $('#saveBrain').onclick = () => { quickBrain($('#brainQuick').value); $('#brainQuick').value = '' }; $('#clearBrain').onclick = () => $('#brainQuick').value = ''; $('#brainJump').onclick = () => $('#brainQuick').focus(); $('#statusFilters').onclick = e => { if (e.target.dataset.st) { savedStatus = e.target.dataset.st; renderSaved() } }; $('#bucketFilters').onclick = e => { if (e.target.dataset.bu) { savedBucket = e.target.dataset.bu; renderSaved() } }; let sc = e => { let id = e.target.dataset.startSaved || e.target.dataset.doneSaved || e.target.dataset.delSaved; if (id) { let x = state.savedItems.find(i => i.id === id); if (e.target.dataset.startSaved && x && can(x)) { x.status = 'current'; x.startedAt = ISO() } if (e.target.dataset.doneSaved && x) { x.status = 'done'; x.doneAt = ISO() } if (e.target.dataset.delSaved) state.savedItems = state.savedItems.filter(i => i.id !== id); saveAll(); renderSaved(); return } }; $('#savedList').onclick = sc; $('#slotBoard').onclick = sc; }
+            const oldShow = showPage; showPage = function (p) { oldShow(p); let page = p || location.hash.replace('#', ''); if (page === 'dashboard') { pinDock(); injectWeekend(); renderWeekend() } if (page === 'focus') renderFocus(); if (page === 'saved') renderSaved(); if (page === 'today') setTimeout(() => $('#dayTimeline')?.scrollTo({ top: Math.max(0, new Date().getHours() * 60 - 180), behavior: 'smooth' }), 250); nav() }; const oldDash = updateDashboard; updateDashboard = function () { oldDash(); pinDock(); renderPins() }; const oldSnap = snapshotData; snapshotData = function () { let s = oldSnap(); return { ...s, savedItems: state.savedItems, focusSessions: state.focusSessions, focusHeat: state.focusHeat, focusPrefs: state.focusPrefs, pinnedWidgets: state.pins, weekendGoals: state.weekend } }; const oldApply = applySnapshot; applySnapshot = function (d) { oldApply(d); state.savedItems = d?.savedItems || state.savedItems; state.focusSessions = d?.focusSessions || state.focusSessions; state.focusHeat = d?.focusHeat || state.focusHeat; state.focusPrefs = d?.focusPrefs || state.focusPrefs; state.pins = d?.pinnedWidgets || state.pins; state.weekend = d?.weekendGoals || state.weekend; norm(); renderSaved(); renderFocus(); renderPins(); renderWeekend() }; const oldTimer = updateFocusTimer; updateFocusTimer = function () { oldTimer(); tick() };
+            norm(); nav(); pinDock(); injectWeekend(); injectPages(); bind(); renderSaved(); renderFocus(); renderPins(); renderWeekend(); setInterval(tick, 1000); showPage();
+        })();
+    </script>
+
+</body>
+
+</html>

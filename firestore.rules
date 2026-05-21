@@ -1,0 +1,115 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} { allow read, write: if false; }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+    function isVerified() { return isSignedIn() && request.auth.token.email_verified == true; }
+
+    // User Profile
+    function isValidUser(data) {
+      return data.keys().hasAll(['email', 'createdAt', 'updatedAt'])
+        && data.email is string && data.email.size() <= 128
+        && data.createdAt == request.time
+        && data.updatedAt == request.time;
+    }
+    function isValidUserUpdate(data) {
+      // In update, only updatedAt and maybe birthDate are modified
+      return data.updatedAt == request.time;
+    }
+    match /users/{userId} {
+      allow get: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn() && request.auth.uid == userId && isValidId(userId) && isValidUser(incoming());
+      allow update: if isSignedIn() && request.auth.uid == userId && isValidUserUpdate(incoming())
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['birthDate', 'updatedAt'])
+        );
+    }
+
+    // Goals
+    function isValidGoal(data) {
+      return data.keys().hasAll(['userId', 'title', 'category', 'status', 'createdAt', 'updatedAt'])
+        && data.userId == request.auth.uid
+        && data.title is string && data.title.size() <= 200
+        && data.category is string && data.category.size() <= 100
+        && data.status is string && data.status.size() <= 50
+        && data.createdAt == request.time
+        && data.updatedAt == request.time;
+    }
+    match /goals/{goalId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(goalId) && isValidGoal(incoming());
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && incoming().userId == request.auth.uid
+        && incoming().updatedAt == request.time
+        && incoming().createdAt == existing().createdAt
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['title', 'category', 'status', 'targetDate', 'updatedAt'])
+        );
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+
+    // Events
+    function isValidEvent(data) {
+      return data.keys().hasAll(['userId', 'title', 'createdAt', 'updatedAt'])
+        && data.userId == request.auth.uid
+        && data.title is string && data.title.size() <= 200
+        && data.createdAt == request.time
+        && data.updatedAt == request.time;
+    }
+    match /events/{eventId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(eventId) && isValidEvent(incoming());
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && incoming().userId == request.auth.uid
+        && incoming().updatedAt == request.time
+        && incoming().createdAt == existing().createdAt
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['title', 'startTime', 'endTime', 'updatedAt'])
+        );
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+
+    // Reflections
+    function isValidReflection(data) {
+      return data.keys().hasAll(['userId', 'text', 'date', 'createdAt', 'updatedAt'])
+        && data.userId == request.auth.uid
+        && data.text is string && data.text.size() <= 5000
+        && data.date is string && data.date.size() <= 20
+        && data.createdAt == request.time
+        && data.updatedAt == request.time;
+    }
+    match /reflections/{reflectionId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(reflectionId) && isValidReflection(incoming());
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && incoming().userId == request.auth.uid
+        && incoming().updatedAt == request.time
+        && incoming().createdAt == existing().createdAt
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['text', 'updatedAt'])
+        );
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+
+    // Quotes
+    function isValidQuote(data) {
+      return data.keys().hasAll(['userId', 'text', 'savedAt'])
+        && data.userId == request.auth.uid
+        && data.text is string && data.text.size() <= 2000
+        && data.savedAt is string && data.savedAt.size() <= 30;
+    }
+    match /quotes/{quoteId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(quoteId) && isValidQuote(incoming());
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+  }
+}

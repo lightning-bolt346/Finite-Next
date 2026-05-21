@@ -1,0 +1,6 @@
+{
+  "name": "Finite",
+  "description": "A minimal, thoughtful dashboard to manage the time we have.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
