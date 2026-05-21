@@ -1,1 +1,166 @@
 @import "tailwindcss";
+
+@theme {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-card-bg: var(--card); /* can use bg-card-bg */
+  --color-card2: var(--card2);
+  --color-border-subtle: var(--border);
+  --color-border-strong: var(--border2);
+  --color-text: var(--text);
+  --color-text-sub: var(--sub);
+  --color-text-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent2: var(--accent2);
+  --color-accent3: var(--accent3);
+  --color-danger: var(--danger);
+  --color-warn: var(--warn);
+}
+
+:root {
+  --bg: #08090d;
+  --surface: #101119;
+  --card: rgba(255, 255, 255, 0.06);
+  --card2: rgba(255, 255, 255, 0.095);
+  --border: rgba(255, 255, 255, 0.12);
+  --border2: rgba(255, 255, 255, 0.22);
+  --text: #f5f5f7;
+  --sub: #a1a1aa;
+  --muted: #71717a;
+  --accent: #a78bfa;
+  --accent2: #38bdf8;
+  --accent3: #34d399;
+  --danger: #fb7185;
+  --warn: #fbbf24;
+}
+
+[data-theme="solar"] {
+  --bg: #0d0906;
+  --surface: #17100b;
+  --accent: #f59e0b;
+  --accent2: #fb7185;
+  --accent3: #fbbf24;
+  --card: rgba(255, 245, 225, 0.065);
+  --card2: rgba(255, 245, 225, 0.1);
+  --border: rgba(255, 220, 170, 0.14);
+}
+
+[data-theme="forest"] {
+  --bg: #060d0a;
+  --surface: #0b1712;
+  --accent: #34d399;
+  --accent2: #22d3ee;
+  --accent3: #84cc16;
+  --card: rgba(230, 255, 242, 0.06);
+  --card2: rgba(230, 255, 242, 0.1);
+  --border: rgba(170, 255, 210, 0.14);
+}
+
+[data-theme="light"] {
+  --bg: #f7f5f0;
+  --surface: #fff;
+  --card: rgba(255, 255, 255, 0.78);
+  --card2: rgba(255, 255, 255, 0.96);
+  --border: rgba(20, 20, 25, 0.13);
+  --border2: rgba(20, 20, 25, 0.24);
+  --text: #101014;
+  --sub: #4f4f59;
+  --muted: #71717a;
+  --accent: #7c3aed;
+  --accent2: #0284c7;
+  --accent3: #059669;
+}
+
+[data-theme="mono"] {
+  --bg: #050505;
+  --surface: #101010;
+  --accent: #f5f5f5;
+  --accent2: #a3a3a3;
+  --accent3: #d4d4d4;
+  --card: rgba(255, 255, 255, 0.055);
+  --card2: rgba(255, 255, 255, 0.09);
+  --border: rgba(255, 255, 255, 0.13);
+}
+
+[data-theme="sepia"] {
+  --bg: #f4ecd8;
+  --surface: #fff7e6;
+  --card: rgba(118, 77, 28, 0.07);
+  --card2: rgba(255, 250, 235, 0.94);
+  --border: rgba(85, 60, 35, 0.18);
+  --border2: rgba(85, 60, 35, 0.32);
+  --text: #2f2419;
+  --sub: #665542;
+  --muted: #887663;
+  --accent: #b7791f;
+  --accent2: #d97706;
+  --accent3: #4d7c0f;
+  --danger: #b91c1c;
+  --warn: #ca8a04;
+}
+
+[data-theme="lavender"] {
+  --bg: #0c0b14;
+  --surface: #151323;
+  --card: rgba(196, 181, 253, 0.07);
+  --card2: rgba(196, 181, 253, 0.12);
+  --border: rgba(221, 214, 254, 0.16);
+  --border2: rgba(221, 214, 254, 0.28);
+  --text: #faf7ff;
+  --sub: #c4b5fd;
+  --muted: #8b7ab8;
+  --accent: #a78bfa;
+  --accent2: #f0abfc;
+  --accent3: #86efac;
+}
+
+[data-theme="ocean"] {
+  --bg: #061018;
+  --surface: #0b1b26;
+  --card: rgba(125, 211, 252, 0.065);
+  --card2: rgba(125, 211, 252, 0.11);
+  --border: rgba(186, 230, 253, 0.15);
+  --border2: rgba(186, 230, 253, 0.3);
+  --text: #f0fbff;
+  --sub: #a6d8ee;
+  --muted: #76a9bf;
+  --accent: #38bdf8;
+  --accent2: #2dd4bf;
+  --accent3: #a3e635;
+}
+
+[data-theme="sage"] {
+  --bg: #07110c;
+  --surface: #101c15;
+  --card: rgba(187, 247, 208, 0.06);
+  --card2: rgba(187, 247, 208, 0.11);
+  --border: rgba(187, 247, 208, 0.15);
+  --border2: rgba(187, 247, 208, 0.28);
+  --text: #f3fff7;
+  --sub: #b7dbc2;
+  --muted: #7fa68c;
+  --accent: #34d399;
+  --accent2: #84cc16;
+  --accent3: #38bdf8;
+}
+
+[data-theme="mist"] {
+  --bg: #eef4f2;
+  --surface: #fff;
+  --card: rgba(255, 255, 255, 0.72);
+  --card2: rgba(255, 255, 255, 0.95);
+  --border: rgba(44, 62, 55, 0.14);
+  --border2: rgba(44, 62, 55, 0.25);
+  --text: #18211d;
+  --sub: #4e625a;
+  --muted: #788a83;
+  --accent: #0f766e;
+  --accent2: #2563eb;
+  --accent3: #65a30d;
+}
+
+/* Base custom styles to help with glassmorphism or custom effects */
+.bg-noise {
+  background-image: radial-gradient(circle at 1px 1px, var(--text) 1px, transparent 0);
+  background-size: 24px 24px;
+}

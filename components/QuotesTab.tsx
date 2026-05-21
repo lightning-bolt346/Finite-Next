@@ -3,29 +3,27 @@
 import { useStore } from '../lib/store';
 import { motion, AnimatePresence } from 'motion/react';
 import { Quote as QuoteIcon, Bookmark, Trash2, RefreshCcw } from 'lucide-react';
-import { useState } from 'react';
-
-const RANDOM_QUOTES = [
-  { text: "The obstacle in the path becomes the path. Never forget, within every obstacle is an opportunity to improve our condition.", author: "Ryan Holiday" },
-  { text: "We suffer more often in imagination than in reality.", author: "Seneca" },
-  { text: "You have power over your mind - not outside events. Realize this, and you will find strength.", author: "Marcus Aurelius" },
-  { text: "He who has a why to live for can bear almost any how.", author: "Friedrich Nietzsche" },
-  { text: "It is not that we have a short time to live, but that we waste a lot of it.", author: "Seneca" },
-  { text: "Thinking is difficult, that is why most people judge.", author: "Carl Jung" }
-];
+import { useState, useEffect } from 'react';
+import { getQuote } from '../lib/quoteEngine';
 
 export default function QuotesTab() {
   const { quotes, addQuote, deleteQuote } = useStore();
-  const [currentQuote, setCurrentQuote] = useState(RANDOM_QUOTES[0]);
+  const [currentQuote, setCurrentQuote] = useState<{text: string, author: string} | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const fetchNewQuote = () => {
-    const available = RANDOM_QUOTES.filter(q => q.text !== currentQuote.text);
-    const random = available[Math.floor(Math.random() * available.length)];
-    setCurrentQuote(random);
+  const fetchNewQuote = async (bypass = false) => {
+    setLoading(true);
+    const q = await getQuote(bypass);
+    setCurrentQuote(q);
+    setLoading(false);
   };
 
+  useEffect(() => {
+    fetchNewQuote();
+  }, []);
+
   const handleSaveQuote = () => {
-    // Only save if not already saved
+    if (!currentQuote) return;
     if (quotes.some(q => q.text === currentQuote.text)) return;
     
     addQuote({
@@ -36,7 +34,7 @@ export default function QuotesTab() {
     });
   };
 
-  const isSaved = quotes.some(q => q.text === currentQuote.text);
+  const isSaved = currentQuote ? quotes.some(q => q.text === currentQuote.text) : false;
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
@@ -55,30 +53,41 @@ export default function QuotesTab() {
             
             <AnimatePresence mode="wait">
               <motion.div 
-                key={currentQuote.text}
+                key={currentQuote?.text || 'loading'}
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-                className="relative z-10"
+                className="relative z-10 min-h-[200px] flex flex-col justify-end"
               >
-                <p className="text-2xl md:text-3xl font-serif leading-tight text-white/90 mb-6 italic tracking-tight">&quot;{currentQuote.text}&quot;</p>
-                <p className="text-[#a1a1aa] font-semibold uppercase tracking-wider text-sm mb-8">— {currentQuote.author}</p>
-                
-                <div className="flex gap-3">
-                  <button 
-                    onClick={handleSaveQuote}
-                    disabled={isSaved}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                      isSaved ? 'bg-white/10 text-white/50 cursor-not-allowed' : 'bg-[#a78bfa] text-white hover:bg-[#8b5cf6] shadow-[0_0_20px_rgba(167,139,250,0.3)]'
-                    }`}
-                  >
-                    <Bookmark size={16} /> {isSaved ? 'Saved' : 'Save Quote'}
-                  </button>
-                  <button 
-                    onClick={fetchNewQuote}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-medium transition-colors"
-                  >
-                    <RefreshCcw size={16} /> Next
-                  </button>
-                </div>
+                {loading && !currentQuote ? (
+                  <div className="flex-1 flex flex-col justify-center animate-pulse">
+                    <div className="h-4 bg-white/10 rounded w-3/4 mb-4"></div>
+                    <div className="h-4 bg-white/10 rounded w-1/2 mb-8"></div>
+                    <div className="h-3 bg-white/10 rounded w-1/4"></div>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-2xl md:text-3xl font-serif leading-tight text-white/90 mb-6 italic tracking-tight">&quot;{currentQuote?.text}&quot;</p>
+                    <p className="text-[#a1a1aa] font-semibold uppercase tracking-wider text-sm mb-8">— {currentQuote?.author}</p>
+                    
+                    <div className="flex gap-3 mt-auto">
+                      <button 
+                        onClick={handleSaveQuote}
+                        disabled={isSaved || loading}
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                          isSaved ? 'bg-white/10 text-white/50 cursor-not-allowed' : 'bg-[#a78bfa] text-white hover:bg-[#8b5cf6] shadow-[0_0_20px_rgba(167,139,250,0.3)]'
+                        }`}
+                      >
+                        <Bookmark size={16} /> {isSaved ? 'Saved' : 'Save Quote'}
+                      </button>
+                      <button 
+                        onClick={() => fetchNewQuote(true)}
+                        disabled={loading}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-50"
+                      >
+                        <RefreshCcw size={16} className={loading ? "animate-spin" : ""} /> Next
+                      </button>
+                    </div>
+                  </>
+                )}
               </motion.div>
             </AnimatePresence>
           </div>

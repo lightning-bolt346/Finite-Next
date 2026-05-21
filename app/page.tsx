@@ -8,9 +8,13 @@ import TodayTab from '../components/TodayTab';
 import GoalsTab from '../components/GoalsTab';
 import ReflectTab from '../components/ReflectTab';
 import QuotesTab from '../components/QuotesTab';
+import FocusTab from '../components/FocusTab';
+import SavedTab from '../components/SavedTab';
 import SettingsModal from '../components/SettingsModal';
+import LandingPage from '../components/LandingPage';
+import { useStore } from '../lib/store';
 
-type Tab = 'dashboard' | 'today' | 'goals' | 'reflect' | 'quotes';
+type Tab = 'dashboard' | 'today' | 'focus' | 'goals' | 'saved' | 'reflect' | 'quotes';
 
 const TabButton = ({ tab, label, activeTab, setActiveTab }: { tab: Tab, label: string, activeTab: Tab, setActiveTab: (t: Tab) => void }) => (
   <button 
@@ -26,25 +30,33 @@ const TabButton = ({ tab, label, activeTab, setActiveTab }: { tab: Tab, label: s
 );
 
 export default function AppMain() {
+  const { setupComplete } = useStore();
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [showLanding, setShowLanding] = useState(false);
   
   const [mounted, setMounted] = useState(false);
   const [time, setTime] = useState<Date | null>(null);
 
   useEffect(() => {
-    // Initial async delay to avoid synchronous setState inside effect linter warning
     setTimeout(() => {
       setMounted(true);
+      if (!setupComplete) {
+        setShowLanding(true);
+      }
       setTime(new Date());
     }, 0);
     const interval = setInterval(() => {
       setTime(new Date());
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [setupComplete]);
 
   if (!mounted) return <div className="min-h-screen bg-[#08090d]" />;
+
+  if (showLanding) {
+    return <LandingPage onComplete={() => setShowLanding(false)} />;
+  }
 
   return (
     <>
@@ -61,15 +73,17 @@ export default function AppMain() {
               Finite
             </div>
             
-            <nav className="hidden md:flex gap-1 p-1 bg-white/[0.02] border border-white/[0.05] rounded-full backdrop-blur-md">
+            <nav className="hidden md:flex gap-1 p-1 bg-white/[0.02] border border-white/[0.05] rounded-full backdrop-blur-md overflow-x-auto scrollbar-hide shrink-0 max-w-[60vw]">
               <TabButton tab="dashboard" label="Dashboard" activeTab={activeTab} setActiveTab={setActiveTab} />
               <TabButton tab="today" label="Today" activeTab={activeTab} setActiveTab={setActiveTab} />
+              <TabButton tab="focus" label="Focus" activeTab={activeTab} setActiveTab={setActiveTab} />
               <TabButton tab="goals" label="Goals" activeTab={activeTab} setActiveTab={setActiveTab} />
+              <TabButton tab="saved" label="Saved" activeTab={activeTab} setActiveTab={setActiveTab} />
               <TabButton tab="reflect" label="Reflect" activeTab={activeTab} setActiveTab={setActiveTab} />
               <TabButton tab="quotes" label="Quotes" activeTab={activeTab} setActiveTab={setActiveTab} />
             </nav>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 shrink-0">
               <span className="font-mono text-sm tracking-widest text-[#a1a1aa] hidden sm:block">
                 {time ? time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
               </span>
@@ -88,18 +102,23 @@ export default function AppMain() {
           <AnimatePresence mode="wait">
             {activeTab === 'dashboard' && <DashboardTab key="dashboard" />}
             {activeTab === 'today' && <TodayTab key="today" />}
+            {activeTab === 'focus' && <FocusTab key="focus" />}
             {activeTab === 'goals' && <GoalsTab key="goals" />}
+            {activeTab === 'saved' && <SavedTab key="saved" />}
             {activeTab === 'reflect' && <ReflectTab key="reflect" />}
             {activeTab === 'quotes' && <QuotesTab key="quotes" />}
           </AnimatePresence>
         </main>
 
         {/* Mobile nav */}
-        <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 p-2 border border-white/[0.08] rounded-full bg-[#12131a]/80 backdrop-blur-xl shadow-2xl flex items-center gap-1 w-[90%] max-w-[400px]">
-          <button onClick={() => setActiveTab('dashboard')} className={`flex-1 py-3 text-xs font-medium rounded-full transition-colors ${activeTab === 'dashboard' ? 'bg-white/10 text-white' : 'text-[#a1a1aa] hover:text-[#f5f5f7]'}`}>Dash</button>
-          <button onClick={() => setActiveTab('today')} className={`flex-1 py-3 text-xs font-medium rounded-full transition-colors ${activeTab === 'today' ? 'bg-white/10 text-white' : 'text-[#a1a1aa] hover:text-[#f5f5f7]'}`}>Today</button>
-          <button onClick={() => setActiveTab('goals')} className={`flex-1 py-3 text-xs font-medium rounded-full transition-colors ${activeTab === 'goals' ? 'bg-white/10 text-white' : 'text-[#a1a1aa] hover:text-[#f5f5f7]'}`}>Goals</button>
-          <button onClick={() => setActiveTab('reflect')} className={`flex-1 py-3 text-xs font-medium rounded-full transition-colors ${activeTab === 'reflect' ? 'bg-white/10 text-white' : 'text-[#a1a1aa] hover:text-[#f5f5f7]'}`}>Reflect</button>
+        <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 p-2 border border-white/[0.08] rounded-full bg-[#12131a]/90 backdrop-blur-xl shadow-2xl flex items-center gap-1 w-[96%] max-w-[500px] overflow-x-auto scrollbar-hide shrink-0">
+          <button onClick={() => setActiveTab('dashboard')} className={`shrink-0 px-3 py-2.5 text-xs font-medium rounded-full transition-colors ${activeTab === 'dashboard' ? 'bg-white/10 text-white' : 'text-[#a1a1aa] hover:text-[#f5f5f7]'}`}>Dash</button>
+          <button onClick={() => setActiveTab('today')} className={`shrink-0 px-3 py-2.5 text-xs font-medium rounded-full transition-colors ${activeTab === 'today' ? 'bg-white/10 text-white' : 'text-[#a1a1aa] hover:text-[#f5f5f7]'}`}>Today</button>
+          <button onClick={() => setActiveTab('focus')} className={`shrink-0 px-3 py-2.5 text-xs font-medium rounded-full transition-colors ${activeTab === 'focus' ? 'bg-white/10 text-white' : 'text-[#a1a1aa] hover:text-[#f5f5f7]'}`}>Focus</button>
+          <button onClick={() => setActiveTab('goals')} className={`shrink-0 px-3 py-2.5 text-xs font-medium rounded-full transition-colors ${activeTab === 'goals' ? 'bg-white/10 text-white' : 'text-[#a1a1aa] hover:text-[#f5f5f7]'}`}>Goals</button>
+          <button onClick={() => setActiveTab('saved')} className={`shrink-0 px-3 py-2.5 text-xs font-medium rounded-full transition-colors ${activeTab === 'saved' ? 'bg-white/10 text-white' : 'text-[#a1a1aa] hover:text-[#f5f5f7]'}`}>Saved</button>
+          <button onClick={() => setActiveTab('reflect')} className={`shrink-0 px-3 py-2.5 text-xs font-medium rounded-full transition-colors ${activeTab === 'reflect' ? 'bg-white/10 text-white' : 'text-[#a1a1aa] hover:text-[#f5f5f7]'}`}>Reflect</button>
+          <button onClick={() => setActiveTab('quotes')} className={`shrink-0 px-3 py-2.5 text-xs font-medium rounded-full transition-colors ${activeTab === 'quotes' ? 'bg-white/10 text-white' : 'text-[#a1a1aa] hover:text-[#f5f5f7]'}`}>Quotes</button>
         </div>
       </div>
 
@@ -107,3 +126,4 @@ export default function AppMain() {
     </>
   );
 }
+

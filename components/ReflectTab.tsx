@@ -5,13 +5,31 @@ import { motion } from 'motion/react';
 import { useState } from 'react';
 import { differenceInDays, format } from 'date-fns';
 
+const PROMPTS = [
+  "What deserves your attention today?",
+  "What did you learn today?",
+  "What are you grateful for right now?",
+  "What is one thing you want to let go of?",
+  "What made you proud today?",
+  "Where did your time actually go today?",
+  "What would make tomorrow better than today?",
+  "What assumption did you challenge today?",
+  "Who or what deserves more of your energy?",
+  "What would your best self do differently?"
+];
+
 export default function ReflectTab() {
   const { reflections, addReflection } = useStore();
   const [text, setText] = useState('');
-  const todayDate = format(new Date(), 'yyyy-MM-dd');
+  const [now, setNow] = useState(new Date());
+
+  const todayDate = format(now, 'yyyy-MM-dd');
   
   const todayReflection = reflections.find(r => r.date === todayDate);
   const pastReflections = reflections.filter(r => r.date !== todayDate).sort((a, b) => b.date.localeCompare(a.date));
+
+  const dayOfYear = Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 1000 / 60 / 60 / 24);
+  const promptText = PROMPTS[dayOfYear % PROMPTS.length];
 
   const handleSave = () => {
     if (!text.trim()) return;
@@ -44,10 +62,14 @@ export default function ReflectTab() {
             </div>
           ) : (
             <div className="space-y-4">
+              <div className="mb-2">
+                <span className="text-xs text-[#a1a1aa] uppercase tracking-wider font-semibold">Prompt</span>
+                <p className="text-white/90 text-sm">{promptText}</p>
+              </div>
               <textarea 
                 value={text}
                 onChange={e => setText(e.target.value)}
-                placeholder="What did you learn today? What are you grateful for?"
+                placeholder="Write your reflection here..."
                 className="w-full h-40 bg-white/5 border border-white/10 rounded-2xl p-5 text-white focus:outline-none focus:border-[#a78bfa] transition-colors resize-none placeholder:text-[#71717a]"
               />
               <div className="flex justify-end">
