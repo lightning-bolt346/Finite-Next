@@ -1,0 +1,22 @@
+export const PERSPECTIVE_QUOTES = [
+  "You've used {lifeRemaining}% of an 80-year life.",
+  "This is week {livedWeeks} of ~4,160 for the average human.",
+  "Your time is limited, so don't waste it living someone else's life. — Steve Jobs",
+  "It is not that we have a short time to live, but that we waste a lot of it. — Seneca",
+  "If you live to 80, you have about 4,000 weeks. How are you using this one?",
+  "You only live once, but if you do it right, once is enough. — Mae West",
+  "The bad news is time flies. The good news is you're the pilot. — Michael Altshuler",
+  "Dost thou love life? Then do not squander time, for that is the stuff life is made of. — Benjamin Franklin",
+  "There is more to life than simply increasing its speed. — Mahatma Gandhi",
+  "Life is long if you know how to use it. — Seneca",
+  "A year from now you may wish you had started today. — Karen Lamb",
+  "We are always getting ready to live but never living. — Ralph Waldo Emerson",
+  "Don't wait. The time will never be just right. — Napoleon Hill",
+  "How we spend our days is, of course, how we spend our lives. — Annie Dillard",
+  "Take care of the minutes and the hours will take care of themselves. — Lord Chesterfield",
+  "Lost time is never found again. — Benjamin Franklin",
+  "The future is something which everyone reaches at the rate of sixty minutes an hour. — C.S. Lewis",
+  "You may delay, but time will not. — Benjamin Franklin",
+  "Every moment is a fresh beginning. — T.S. Eliot",
+  "Remembering that I'll be dead soon is the most important tool I've ever encountered. — Steve Jobs"
+];

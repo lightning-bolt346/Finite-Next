@@ -40,16 +40,16 @@ export default function QuotesTab() {
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
       <div className="flex items-end justify-between mb-8">
         <div>
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight m-0 text-white/90 mb-2">Quotes</h1>
-          <p className="text-[#a1a1aa] text-sm">Save quotes that hit hard.</p>
+          <h1 className="text-h1 font-bold tracking-tight m-0 text-text-primary mb-2">Quotes</h1>
+          <p className="text-text-muted text-sm">Save quotes that hit hard.</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>
-          <h2 className="text-xl font-semibold mb-6 text-white/90">Current Quote</h2>
-          <div className="p-8 md:p-10 bg-gradient-to-br from-[#a78bfa]/10 to-transparent border border-[#a78bfa]/20 rounded-3xl relative overflow-hidden group">
-            <QuoteIcon className="absolute top-6 right-6 text-[#a78bfa]/20 w-24 h-24 transform rotate-12" />
+          <h2 className="text-h2 font-semibold mb-6 text-text-primary">Current Quote</h2>
+          <div className="p-8 md:p-10 bg-gradient-to-br from-[#a78bfa]/10 to-transparent border border-accent/20 rounded-sm shadow-1 relative overflow-hidden group">
+            <QuoteIcon className="absolute top-6 right-6 text-accent/20 w-24 h-24 transform rotate-12" />
             
             <AnimatePresence mode="wait">
               <motion.div 
@@ -65,15 +65,15 @@ export default function QuotesTab() {
                   </div>
                 ) : (
                   <>
-                    <p className="text-2xl md:text-3xl font-serif leading-tight text-white/90 mb-6 italic tracking-tight">&quot;{currentQuote?.text}&quot;</p>
-                    <p className="text-[#a1a1aa] font-semibold uppercase tracking-wider text-sm mb-8">— {currentQuote?.author}</p>
+                    <p className="text-2xl md:text-3xl font-serif leading-tight text-text-primary mb-6 italic tracking-tight">&quot;{currentQuote?.text}&quot;</p>
+                    <p className="text-text-muted font-semibold uppercase tracking-wider text-sm mb-8">— {currentQuote?.author}</p>
                     
                     <div className="flex gap-3 mt-auto">
                       <button 
                         onClick={handleSaveQuote}
                         disabled={isSaved || loading}
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                          isSaved ? 'bg-white/10 text-white/50 cursor-not-allowed' : 'bg-[#a78bfa] text-white hover:bg-[#8b5cf6] shadow-[0_0_20px_rgba(167,139,250,0.3)]'
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-sm text-sm font-medium transition-colors ${
+                          isSaved ? 'bg-white/10 text-text-primary/50 cursor-not-allowed' : 'bg-accent text-text-primary hover:opacity-90 shadow-[0_0_20px_rgba(167,139,250,0.3)]'
                         }`}
                       >
                         <Bookmark size={16} /> {isSaved ? 'Saved' : 'Save Quote'}
@@ -81,7 +81,7 @@ export default function QuotesTab() {
                       <button 
                         onClick={() => fetchNewQuote(true)}
                         disabled={loading}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-50"
+                        className="flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-text-primary rounded-sm text-sm font-medium transition-colors disabled:opacity-50"
                       >
                         <RefreshCcw size={16} className={loading ? "animate-spin" : ""} /> Next
                       </button>
@@ -94,24 +94,44 @@ export default function QuotesTab() {
         </div>
 
         <div>
-          <h2 className="text-xl font-semibold mb-6 text-white/90">Saved Quotes</h2>
+          <h2 className="text-h2 font-semibold mb-6 flex items-center justify-between text-text-primary">
+            Saved Quotes
+            <span className="text-sm font-normal text-text-muted">{quotes.length} total</span>
+          </h2>
           {quotes.length === 0 ? (
-            <div className="p-8 text-center border border-dashed border-white/10 rounded-3xl">
-              <Bookmark className="mx-auto text-[#71717a] mb-3" size={24} />
-              <p className="text-[#71717a] text-sm">No saved quotes yet.</p>
+            <div className="p-8 text-center border border-dashed border-border rounded-lg shadow-1">
+              <Bookmark className="mx-auto text-text-secondary mb-3" size={24} />
+              <p className="text-text-secondary text-sm">No saved quotes yet.</p>
             </div>
           ) : (
-            <div className="flex flex-col gap-4">
-              {quotes.map(quote => (
-                <div key={quote.id} className="group p-6 bg-white/[0.02] border border-white/[0.05] rounded-3xl hover:bg-white/[0.04] transition-colors relative">
-                  <p className="text-lg font-serif italic text-white/80 mb-3 leading-snug">&quot;{quote.text}&quot;</p>
-                  <p className="text-xs text-[#a1a1aa] uppercase tracking-wider font-semibold">— {quote.author}</p>
-                  <button 
-                    onClick={() => deleteQuote(quote.id)}
-                    className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 p-2 text-[#71717a] hover:text-red-400 transition-all rounded-full hover:bg-white/5"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+            <div className="flex flex-col gap-8">
+              {Object.entries(
+                quotes.reduce((acc, q) => {
+                  acc[q.author] = acc[q.author] || [];
+                  acc[q.author].push(q);
+                  return acc;
+                }, {} as Record<string, typeof quotes>)
+              ).map(([author, authorQuotes]) => (
+                <div key={author} className="space-y-4 relative">
+                  <div className="flex items-center gap-4">
+                     <h3 className="text-sm font-bold uppercase tracking-widest text-text-muted">{author}</h3>
+                     <div className="h-px flex-1 bg-border/50" />
+                  </div>
+                  <div className="grid gap-4">
+                    {authorQuotes.map(quote => (
+                      <div key={quote.id} className="group p-6 bg-surface-1 border border-border rounded-xl shadow-1 hover:border-border-strong transition-colors relative">
+                        <QuoteIcon className="absolute top-4 right-4 text-surface-2 w-8 h-8" />
+                        <p className="text-lg font-serif italic text-text-primary/90 mb-2 leading-relaxed relative z-10">&quot;{quote.text}&quot;</p>
+                        <button 
+                          onClick={() => deleteQuote(quote.id)}
+                          className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 p-2 text-text-muted hover:text-danger hover:bg-danger-soft transition-all rounded-md z-20"
+                          title="Delete Quote"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>

@@ -46,6 +46,26 @@ export default function GoalsTab() {
       title: 'Inversion (Anti-Goals)',
       desc: 'Instead of thinking about what you want, think about what you want to avoid.',
       steps: ['Define the worst-case scenario', 'List habits that lead there', 'Build goals that prevent those habits']
+    },
+    'Atomic Habits': {
+      title: '1% Compounding',
+      desc: 'Focus on small, daily 1% improvements instead of massive transformations.',
+      steps: ['Identify the process needed', 'Make the cue obvious', 'Improve it by 1% daily']
+    },
+    'WOOP': {
+      title: 'WOOP Method',
+      desc: 'Wish, Outcome, Obstacle, Plan. A scientifically backed strategy for goal attainment.',
+      steps: ['Define the Wish', 'Visualize the Best Outcome', 'Identify the internal Obstacle', 'Make a then/if Plan']
+    },
+    'North Star': {
+      title: 'North Star Metric',
+      desc: 'Distill your focus down to a single crucial metric that captures your core value.',
+      steps: ['Identify the core value delivered', 'Define the single metric tracking it', 'Align all actions to move the metric']
+    },
+    'Ikigai': {
+      title: 'Ikigai Alignment',
+      desc: 'Find the intersection of what you love, what you are good at, what the world needs, and what pays.',
+      steps: ['Map your passions', 'Identify your skills', 'Find market needs', 'Locate the intersection']
     }
   };
 
@@ -53,46 +73,46 @@ export default function GoalsTab() {
     const sectionGoals = goals.filter(g => g.category === category);
     
     return (
-      <div className="mb-8 p-6 bg-white/[0.02] border border-white/[0.05] rounded-3xl">
-        <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
+      <div className="mb-8 p-6 bg-surface-1 border border-border rounded-xl shadow-1">
+        <h2 className="text-xl font-semibold mb-6 flex items-center gap-2 text-text-primary">
           {title}
-          <span className="text-xs bg-white/10 px-2 py-0.5 rounded-full text-[#a1a1aa] font-mono">{sectionGoals.length}</span>
+          <span className="text-micro bg-surface-2 border border-border px-2 py-0.5 rounded-full text-text-muted font-mono">{sectionGoals.length}</span>
         </h2>
         
         {sectionGoals.length === 0 ? (
-          <p className="text-sm text-[#71717a] italic">No goals set.</p>
+          <p className="text-sm text-text-muted italic">No goals set.</p>
         ) : (
           <div className="space-y-3">
             {sectionGoals.map(goal => (
-              <div key={goal.id} className="group flex items-start gap-4 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.06] transition-colors">
+              <div key={goal.id} className="group flex items-start gap-4 p-4 rounded-lg bg-surface-2 border border-border hover:bg-surface-3 shadow-1 transition-colors">
                 <button 
                   onClick={() => updateGoal(goal.id, { status: goal.status === 'completed' ? 'active' : 'completed' })}
-                  className={`mt-1 ${goal.status === 'completed' ? 'text-[#34d399]' : 'text-[#71717a] hover:text-[#34d399]'} transition-colors flex-shrink-0`}
+                  className={`mt-1 ${goal.status === 'completed' ? 'text-success' : 'text-text-muted hover:text-success'} transition-colors flex-shrink-0`}
                 >
                   {goal.status === 'completed' ? <CheckCircle2 size={20} /> : <Circle size={20} />}
                 </button>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span title={goal.type === 'process' ? 'Process Goal' : 'Outcome Goal'} className="text-[#a1a1aa] flex-shrink-0">
+                    <span title={goal.type === 'process' ? 'Process Goal' : 'Outcome Goal'} className="text-text-muted flex-shrink-0">
                       {goal.type === 'process' ? <GitCommit size={14} /> : <Target size={14} />}
                     </span>
-                    <p className={`font-medium truncate ${goal.status === 'completed' ? 'text-white/50 line-through' : 'text-white/90'}`}>
+                    <p className={`font-medium truncate ${goal.status === 'completed' ? 'text-text-muted line-through' : 'text-text-primary'}`}>
                       {goal.title}
                     </p>
                   </div>
                   {goal.notes && (
-                    <div className="flex gap-2 items-start text-xs text-[#a1a1aa] mt-2 bg-white/5 p-2 rounded-lg break-words">
+                    <div className="flex gap-2 items-start text-xs text-text-secondary mt-2 bg-surface-1 p-2 border border-border rounded-sm break-words">
                       <AlignLeft size={12} className="mt-0.5 flex-shrink-0" />
                       <span className="line-clamp-3">{goal.notes}</span>
                     </div>
                   )}
                   {goal.targetDate && (
-                    <p className="text-xs font-mono text-[#a1a1aa] mt-2">Due: {new Date(goal.targetDate).toLocaleDateString()}</p>
+                    <p className="text-xs font-mono text-text-muted mt-2">Due: {new Date(goal.targetDate).toLocaleDateString()}</p>
                   )}
                 </div>
                 <button 
                   onClick={() => deleteGoal(goal.id)}
-                  className="opacity-0 group-hover:opacity-100 p-2 text-[#71717a] hover:text-red-400 transition-all rounded-full hover:bg-white/5 flex-shrink-0"
+                  className="opacity-0 group-hover:opacity-100 p-2 text-text-muted hover:text-danger hover:bg-surface-3 transition-all rounded-sm flex-shrink-0"
                 >
                   <Trash2 size={16} />
                 </button>
@@ -108,12 +128,12 @@ export default function GoalsTab() {
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
       <div className="flex items-end justify-between mb-8">
         <div>
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight m-0 text-white/90 mb-2">Goals</h1>
-          <p className="text-[#a1a1aa] text-sm">Outcomes and repeatable actions.</p>
+          <h1 className="text-h1 font-bold tracking-tight text-text-primary mb-2">Goals</h1>
+          <p className="text-text-secondary text-sm">Outcomes and repeatable actions.</p>
         </div>
         <button 
           onClick={() => setShowAdd(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-medium transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-surface-2 hover:bg-surface-3 border border-border text-text-primary rounded-sm text-sm font-medium transition-colors shadow-1"
         >
           <Plus size={16} /> Add Goal
         </button>
@@ -123,93 +143,93 @@ export default function GoalsTab() {
         {showAdd && (
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-bg/80 backdrop-blur-sm"
           >
-            <div className="bg-[#12131a] border border-white/10 p-6 rounded-3xl w-full max-w-md shadow-2xl overflow-y-auto max-h-[90vh]">
+            <div className="bg-surface-1 border border-border p-6 rounded-lg w-full max-w-md shadow-2xl overflow-y-auto max-h-[90vh]">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold">New Goal</h3>
-                <button onClick={() => setShowAdd(false)} className="text-[#a1a1aa] hover:text-white"><X size={20} /></button>
+                <h3 className="text-xl font-bold text-text-primary">New Goal</h3>
+                <button onClick={() => setShowAdd(false)} className="text-text-muted hover:text-text-primary"><X size={20} /></button>
               </div>
               <form onSubmit={handleAdd}>
                 <div className="space-y-4 mb-6">
                   <div>
-                    <label className="text-xs text-[#a1a1aa] block mb-1 uppercase tracking-wider font-semibold">Title</label>
+                    <label className="text-micro text-text-muted block mb-1 uppercase tracking-wider font-semibold">Title</label>
                     <input 
                       type="text" required autoFocus
                       value={newGoal.title} onChange={e => setNewGoal({...newGoal, title: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#a78bfa] transition-colors"
+                      className="w-full bg-surface-2 border border-border rounded-sm px-4 py-3 text-text-primary focus:outline-none focus:border-accent transition-colors"
                       placeholder="What is the objective?"
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-[#a1a1aa] block mb-1 uppercase tracking-wider font-semibold">Type</label>
+                    <label className="text-micro text-text-muted block mb-1 uppercase tracking-wider font-semibold">Type</label>
                     <div className="flex gap-2">
                       <button 
                         type="button"
                         onClick={() => setNewGoal({...newGoal, type: 'outcome'})}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border text-sm font-medium transition-colors ${newGoal.type === 'outcome' ? 'bg-[#a78bfa]/20 border-[#a78bfa] text-[#a78bfa]' : 'border-white/10 bg-white/5 text-[#a1a1aa] hover:bg-white/10'}`}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-sm border text-sm font-medium transition-colors ${newGoal.type === 'outcome' ? 'bg-accent-soft border-accent text-accent' : 'border-border bg-surface-2 text-text-muted hover:bg-surface-3 hover:text-text-primary'}`}
                       >
                         <Target size={16} /> Outcome
                       </button>
                       <button 
                         type="button"
                         onClick={() => setNewGoal({...newGoal, type: 'process'})}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border text-sm font-medium transition-colors ${newGoal.type === 'process' ? 'bg-[#38bdf8]/20 border-[#38bdf8] text-[#38bdf8]' : 'border-white/10 bg-white/5 text-[#a1a1aa] hover:bg-white/10'}`}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-sm border text-sm font-medium transition-colors ${newGoal.type === 'process' ? 'bg-accent-soft border-accent text-accent' : 'border-border bg-surface-2 text-text-muted hover:bg-surface-3 hover:text-text-primary'}`}
                       >
                         <GitCommit size={16} /> Process
                       </button>
                     </div>
                   </div>
                   <div>
-                    <label className="text-xs text-[#a1a1aa] block mb-1 uppercase tracking-wider font-semibold">Category</label>
+                    <label className="text-micro text-text-muted block mb-1 uppercase tracking-wider font-semibold">Category</label>
                     <select 
                       value={newGoal.category} onChange={e => setNewGoal({...newGoal, category: e.target.value as any})}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#a78bfa] transition-colors appearance-none"
+                      className="w-full bg-surface-2 border border-border rounded-sm px-4 py-3 text-text-primary focus:outline-none focus:border-accent transition-colors appearance-none"
                     >
-                      <option value="short">Short Term (Today / This Week)</option>
-                      <option value="medium">Medium Term (This Month / Quarter)</option>
-                      <option value="long">Long Term (Yearly / Life)</option>
+                      <option value="short" className="bg-bg">Short Term (Today / This Week)</option>
+                      <option value="medium" className="bg-bg">Medium Term (This Month / Quarter)</option>
+                      <option value="long" className="bg-bg">Long Term (Yearly / Life)</option>
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs text-[#a1a1aa] block mb-1 uppercase tracking-wider font-semibold">Methodology</label>
+                    <label className="text-micro text-text-muted block mb-1 uppercase tracking-wider font-semibold">Methodology</label>
                     <div className="flex gap-2">
                       <select 
                         value={(newGoal as any).methodology || 'OKR'} onChange={e => setNewGoal({...newGoal, methodology: e.target.value} as any)}
-                        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#a78bfa] transition-colors appearance-none"
+                        className="flex-1 bg-surface-2 border border-border rounded-sm px-4 py-3 text-text-primary focus:outline-none focus:border-accent transition-colors appearance-none"
                       >
                         {Object.keys(METHODOLOGIES).map(m => (
-                          <option key={m} value={m} className="bg-[#12131a]">{m}</option>
+                          <option key={m} value={m} className="bg-bg">{m}</option>
                         ))}
                       </select>
                       <button 
                         type="button" 
                         onClick={() => setShowMethodologyInfo((newGoal as any).methodology || 'OKR')}
-                        className="px-4 bg-white/5 border border-white/10 rounded-xl text-white hover:bg-white/10 transition-colors text-sm font-semibold"
+                        className="px-4 bg-surface-2 border border-border rounded-sm text-text-primary hover:bg-surface-3 transition-colors text-sm font-semibold"
                       >
                         Guide
                       </button>
                     </div>
                   </div>
                   <div>
-                    <label className="text-xs text-[#a1a1aa] block mb-1 uppercase tracking-wider font-semibold">Target Date (Optional)</label>
+                    <label className="text-micro text-text-muted block mb-1 uppercase tracking-wider font-semibold">Target Date (Optional)</label>
                     <input 
                       type="date"
                       value={newGoal.targetDate} onChange={e => setNewGoal({...newGoal, targetDate: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#a78bfa] transition-colors"
+                      className="w-full bg-surface-2 border border-border rounded-sm px-4 py-3 text-text-primary focus:outline-none focus:border-accent transition-colors"
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-[#a1a1aa] block mb-1 uppercase tracking-wider font-semibold">Notes (Optional)</label>
+                    <label className="text-micro text-text-muted block mb-1 uppercase tracking-wider font-semibold">Notes (Optional)</label>
                     <textarea 
                       value={newGoal.notes} onChange={e => setNewGoal({...newGoal, notes: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#a78bfa] transition-colors min-h-[80px]"
+                      className="w-full bg-surface-2 border border-border rounded-sm px-4 py-3 text-text-primary focus:outline-none focus:border-accent transition-colors min-h-[80px]"
                       placeholder="Context, breaking it down, why it matters..."
                     />
                   </div>
                 </div>
                 <div className="flex justify-end gap-3">
-                  <button type="submit" className="w-full py-3 rounded-xl text-sm font-bold bg-[#a78bfa] text-white hover:bg-[#8b5cf6] transition-colors shadow-[0_0_20px_rgba(167,139,250,0.3)]">Create Goal</button>
+                  <button type="submit" className="w-full py-3 rounded-sm text-sm font-bold bg-accent text-bg hover:opacity-90 transition-opacity shadow-[0_0_20px_var(--color-accent-soft)]">Create Goal</button>
                 </div>
               </form>
             </div>
@@ -221,25 +241,25 @@ export default function GoalsTab() {
         {showMethodologyInfo && METHODOLOGIES[showMethodologyInfo] && (
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-bg/80 backdrop-blur-sm"
           >
-            <div className="bg-[#12131a] border border-white/10 p-6 rounded-3xl w-full max-w-sm shadow-2xl relative">
+            <div className="bg-surface-1 border border-border p-6 rounded-lg w-full max-w-sm shadow-2xl relative">
               <button 
                 onClick={() => setShowMethodologyInfo(null)}
-                className="absolute top-4 right-4 p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-white transition-colors text-sm"
+                className="absolute top-4 right-4 p-1.5 rounded-sm bg-surface-2 hover:bg-surface-3 text-text-primary transition-colors text-sm"
               >
                 <X size={16} />
               </button>
-              <h3 className="text-xl font-bold mb-2 text-white/90">{METHODOLOGIES[showMethodologyInfo].title}</h3>
-              <p className="text-[#a1a1aa] mb-6 text-sm">{METHODOLOGIES[showMethodologyInfo].desc}</p>
+              <h3 className="text-xl font-bold mb-2 text-text-primary">{METHODOLOGIES[showMethodologyInfo].title}</h3>
+              <p className="text-text-secondary mb-6 text-sm">{METHODOLOGIES[showMethodologyInfo].desc}</p>
               
               <div className="space-y-3">
                 {METHODOLOGIES[showMethodologyInfo].steps.map((step, idx) => (
-                  <div key={idx} className="flex gap-3 items-start bg-white/[0.03] p-3 rounded-xl border border-white/[0.05]">
-                    <div className="w-5 h-5 rounded-full bg-[#a78bfa]/20 text-[#a78bfa] flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+                  <div key={idx} className="flex gap-3 items-start bg-surface-2 p-3 rounded-sm border border-border">
+                    <div className="w-5 h-5 rounded-full bg-accent-soft text-accent flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
                       {idx + 1}
                     </div>
-                    <p className="text-sm font-medium text-white/90">{step}</p>
+                    <p className="text-sm font-medium text-text-primary">{step}</p>
                   </div>
                 ))}
               </div>

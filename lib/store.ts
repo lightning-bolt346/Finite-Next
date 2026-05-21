@@ -34,6 +34,12 @@ export interface QuoteType {
   savedAt: string;
 }
 
+export interface BrainDump {
+  id: string;
+  text: string;
+  createdAt: number;
+}
+
 export interface FocusSession {
   id: string;
   title?: string;
@@ -92,6 +98,11 @@ interface AppState {
 
   pinnedWidgets: string[];
   togglePinWidget: (widgetId: string) => void;
+  pinWidget: (id: string) => void;
+  unpinWidget: (id: string) => void;
+
+  pinnedTimelineCards: string[];
+  togglePinTimelineCard: (id: string) => void;
 
   todayGoals: Record<string, TodayGoal>;
   setTodayGoal: (date: string, goal: Partial<TodayGoal>) => void;
@@ -131,13 +142,14 @@ interface AppState {
   focusSessions: FocusSession[];
   addFocusSession: (session: FocusSession) => void;
 
+  brainDumps: BrainDump[];
+  addBrainDump: (dump: BrainDump) => void;
+  removeBrainDump: (id: string) => void;
+
   savedItems: SavedItem[];
   addSavedItem: (item: SavedItem) => void;
   updateSavedItem: (id: string, updates: Partial<SavedItem>) => void;
   deleteSavedItem: (id: string) => void;
-
-  pinWidget: (id: string) => void;
-  unpinWidget: (id: string) => void;
 
   clearAll: () => void;
 }
@@ -162,6 +174,13 @@ export const useStore = create<AppState>()(
       })),
       unpinWidget: (widgetId) => set((state) => ({
         pinnedWidgets: state.pinnedWidgets.filter(id => id !== widgetId)
+      })),
+
+      pinnedTimelineCards: [],
+      togglePinTimelineCard: (id) => set((state) => ({
+        pinnedTimelineCards: state.pinnedTimelineCards.includes(id)
+          ? state.pinnedTimelineCards.filter(cardId => cardId !== id)
+          : [...state.pinnedTimelineCards, id]
       })),
 
       todayGoals: {},
@@ -236,6 +255,10 @@ export const useStore = create<AppState>()(
       focusSessions: [],
       addFocusSession: (session) => set((state) => ({ focusSessions: [...state.focusSessions, session] })),
 
+      brainDumps: [],
+      addBrainDump: (dump) => set((state) => ({ brainDumps: [dump, ...state.brainDumps] })),
+      removeBrainDump: (id) => set((state) => ({ brainDumps: state.brainDumps.filter((b) => b.id !== id) })),
+
       savedItems: [],
       addSavedItem: (item) => set((state) => ({ savedItems: [...state.savedItems, item] })),
       updateSavedItem: (id, updates) => set((state) => ({
@@ -247,7 +270,7 @@ export const useStore = create<AppState>()(
 
       clearAll: () => set({ 
         goals: [], events: [], reflections: [], quotes: [], 
-        weekendWants: [], focusSessions: [], savedItems: [],
+        weekendWants: [], focusSessions: [], savedItems: [], brainDumps: [],
         setupComplete: false, userName: '', birthDate: '1995-01-01',
         pinnedWidgets: [], todayGoals: {}
       }),

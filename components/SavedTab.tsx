@@ -83,35 +83,35 @@ export default function SavedTab() {
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
       <div className="flex items-end justify-between mb-8">
         <div>
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight m-0 text-white/90 mb-2">Saved</h1>
-          <p className="text-[#a1a1aa] text-sm">Curation with limits. Max 2 active per category.</p>
+          <h1 className="text-h1 font-bold tracking-tight m-0 text-text-primary mb-2">Saved</h1>
+          <p className="text-text-secondary text-sm">Curation with limits. Max 2 active per category.</p>
         </div>
       </div>
 
       <div className="grid grid-cols-3 md:grid-cols-4 gap-4 mb-8">
-        <div className="col-span-3 md:col-span-1 p-6 bg-[#38bdf8]/10 border border-[#38bdf8]/20 rounded-3xl flex flex-col justify-center">
-          <div className="text-xs text-[#38bdf8] uppercase tracking-wider font-semibold mb-1">Total Items</div>
-          <div className="text-3xl font-bold text-white/90">{savedItems.length}</div>
+        <div className="col-span-3 md:col-span-1 p-6 bg-accent-soft border border-accent/20 rounded-xl shadow-1 flex flex-col justify-center">
+          <div className="text-micro text-accent uppercase tracking-wider font-semibold mb-1">Total Items</div>
+          <div className="text-3xl font-bold text-text-primary">{savedItems.length}</div>
         </div>
-        <div className="p-4 bg-white/[0.02] border border-white/[0.05] rounded-3xl flex flex-col justify-center">
-          <div className="text-xs text-[#a1a1aa] uppercase tracking-wider font-semibold mb-1">Inbox</div>
-          <div className="text-2xl font-bold text-white/90">{inboxCount}</div>
+        <div className="p-4 bg-surface-1 border border-border rounded-xl shadow-1 flex flex-col justify-center">
+          <div className="text-micro text-text-muted uppercase tracking-wider font-semibold mb-1">Inbox</div>
+          <div className="text-2xl font-bold text-text-primary">{inboxCount}</div>
         </div>
-        <div className="p-4 bg-white/[0.02] border border-white/[0.05] rounded-3xl flex flex-col justify-center">
-          <div className="text-xs text-[#a1a1aa] uppercase tracking-wider font-semibold mb-1">Active</div>
-          <div className="text-2xl font-bold text-white/90">{currentCount}</div>
+        <div className="p-4 bg-surface-1 border border-border rounded-xl shadow-1 flex flex-col justify-center">
+          <div className="text-micro text-text-muted uppercase tracking-wider font-semibold mb-1">Active</div>
+          <div className="text-2xl font-bold text-text-primary">{currentCount}</div>
         </div>
-        <div className="p-4 bg-white/[0.02] border border-white/[0.05] rounded-3xl flex flex-col justify-center">
-          <div className="text-xs text-[#a1a1aa] uppercase tracking-wider font-semibold mb-1">Done</div>
-          <div className="text-2xl font-bold text-white/90">{doneCount}</div>
+        <div className="p-4 bg-surface-1 border border-border rounded-xl shadow-1 flex flex-col justify-center">
+          <div className="text-micro text-text-muted uppercase tracking-wider font-semibold mb-1">Done</div>
+          <div className="text-2xl font-bold text-text-primary">{doneCount}</div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1 space-y-6">
-          <div className="p-6 bg-white/[0.02] border border-white/[0.05] rounded-3xl">
-            <h2 className="text-lg font-semibold flex items-center gap-2 mb-4 text-white/90">
-              <Inbox size={18} className="text-[#a78bfa]" /> Brain Dump
+          <div className="p-6 bg-surface-1 border border-border rounded-xl shadow-1">
+            <h2 className="text-h3 font-semibold flex items-center gap-2 mb-4 text-text-primary">
+              <Inbox size={18} className="text-accent" /> Brain Dump
             </h2>
             <form onSubmit={handleAdd} className="space-y-4">
               <div>
@@ -121,7 +121,7 @@ export default function SavedTab() {
                   onChange={e => setNewUrl(e.target.value)}
                   onBlur={handleUrlBlur}
                   placeholder="Link URL (optional)" 
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#a78bfa]"
+                  className="w-full bg-surface-2 border border-border rounded-sm px-4 py-3 text-sm text-text-primary focus:outline-none focus:border-accent transition-colors"
                 />
               </div>
               <div>
@@ -131,24 +131,24 @@ export default function SavedTab() {
                   onChange={e => setNewTitle(e.target.value)}
                   placeholder="Title (required)" 
                   required
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#a78bfa]"
+                  className="w-full bg-surface-2 border border-border rounded-sm px-4 py-3 text-sm text-text-primary focus:outline-none focus:border-accent transition-colors"
                 />
               </div>
               <div className="flex gap-2">
                 <select 
                   value={newType}
                   onChange={e => setNewType(e.target.value)}
-                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-[#a1a1aa] focus:outline-none focus:border-[#a78bfa] appearance-none"
+                  className="flex-1 bg-surface-2 border border-border rounded-sm px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent appearance-none transition-colors"
                 >
-                  {TYPES.map(t => <option key={t} value={t} className="bg-[#12131a]">{t}</option>)}
+                  {TYPES.map(t => <option key={t} value={t} className="bg-bg">{t}</option>)}
                 </select>
                 <select 
                   value={newCat}
                   onChange={e => setNewCat(e.target.value as SavedItemCategory)}
-                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-[#a1a1aa] focus:outline-none focus:border-[#a78bfa] appearance-none"
+                  className="flex-1 bg-surface-2 border border-border rounded-sm px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent appearance-none transition-colors"
                 >
                   {CATEGORIES.map(c => (
-                    <option key={c} value={c} className="bg-[#12131a]">{c}</option>
+                    <option key={c} value={c} className="bg-bg">{c}</option>
                   ))}
                 </select>
               </div>
@@ -158,7 +158,7 @@ export default function SavedTab() {
                   value={newTags}
                   onChange={e => setNewTags(e.target.value)}
                   placeholder="Tags (comma separated)" 
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#a78bfa]"
+                  className="w-full bg-surface-2 border border-border rounded-sm px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent transition-colors"
                 />
               </div>
               <div>
@@ -167,25 +167,25 @@ export default function SavedTab() {
                   onChange={e => setNewNotes(e.target.value)}
                   placeholder="Notes..." 
                   rows={2}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-[#a78bfa] resize-none"
+                  className="w-full bg-surface-2 border border-border rounded-sm px-4 py-2 text-sm text-text-primary focus:outline-none focus:border-accent resize-none transition-colors"
                 />
               </div>
-              <button type="submit" className="w-full py-3 bg-[#a78bfa] text-white rounded-xl text-sm font-bold shadow-[0_0_20px_rgba(167,139,250,0.3)] hover:bg-[#8b5cf6] transition-colors">
+              <button type="submit" className="w-full py-3 bg-accent text-bg rounded-sm text-sm font-bold shadow-[0_0_20px_var(--color-accent-soft)] hover:opacity-90 transition-opacity">
                 Save Item
               </button>
             </form>
           </div>
 
-          <div className="flex bg-white/5 p-1 rounded-2xl">
+          <div className="flex bg-surface-2 p-1 rounded-sm border border-border">
             <button 
               onClick={() => setView('board')}
-              className={`flex-1 py-2 text-sm font-medium rounded-xl transition-all flex justify-center items-center gap-2 ${view === 'board' ? 'bg-[#12131a] text-white/90 shadow' : 'text-[#a1a1aa] hover:text-white'}`}
+              className={`flex-1 py-2 text-sm font-medium rounded-sm transition-all flex justify-center items-center gap-2 ${view === 'board' ? 'bg-bg text-text-primary shadow-1 mix-blend-normal' : 'text-text-muted hover:text-text-primary'}`}
             >
               <LayoutGrid size={16} /> Current Board
             </button>
             <button 
               onClick={() => setView('backlog')}
-              className={`flex-1 py-2 text-sm font-medium rounded-xl transition-all flex justify-center items-center gap-2 ${view === 'backlog' ? 'bg-[#12131a] text-white/90 shadow' : 'text-[#a1a1aa] hover:text-white'}`}
+              className={`flex-1 py-2 text-sm font-medium rounded-sm transition-all flex justify-center items-center gap-2 ${view === 'backlog' ? 'bg-bg text-text-primary shadow-1 mix-blend-normal' : 'text-text-muted hover:text-text-primary'}`}
             >
               <Library size={16} /> Inbox & Backlog
             </button>
@@ -196,8 +196,8 @@ export default function SavedTab() {
           {view === 'board' ? (
             <div className="space-y-6">
               <div className="flex justify-between items-center mb-2">
-                <h2 className="text-xl font-semibold text-white/90 flex items-center gap-2"><BookOpen size={20} className="text-[#38bdf8]"/> Active Items</h2>
-                <span className="text-xs bg-white/10 px-2 py-1 rounded text-[#a1a1aa]">Max 2 per category</span>
+                <h2 className="text-h2 font-semibold text-text-primary flex items-center gap-2"><BookOpen size={20} className="text-accent"/> Active Items</h2>
+                <span className="text-micro bg-surface-2 border border-border px-2 py-1 rounded-full text-text-muted">Max 2 per category</span>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -206,23 +206,23 @@ export default function SavedTab() {
                   if (currentItems.length === 0) return null;
                   
                   return (
-                    <div key={cat} className="p-5 bg-white/[0.02] border border-white/[0.05] rounded-3xl">
+                    <div key={cat} className="p-5 bg-surface-1 border border-border rounded-xl shadow-1">
                       <div className="flex justify-between items-center mb-4">
-                        <span className="text-xs font-bold text-[#a1a1aa] uppercase tracking-wider">{cat}</span>
-                        <span className="text-xs font-mono text-[#71717a]">{currentItems.length}/2</span>
+                        <span className="text-micro font-bold text-text-muted uppercase tracking-wider">{cat}</span>
+                        <span className="text-micro font-mono text-text-secondary">{currentItems.length}/2</span>
                       </div>
                       <div className="space-y-3">
                         {currentItems.map(item => (
-                          <div key={item.id} className="group flex items-start gap-3 p-3 bg-white/5 border border-white/5 rounded-xl">
+                          <div key={item.id} className="group flex items-start gap-3 p-3 bg-surface-2 border border-border/50 rounded-sm">
                             <button 
                               onClick={() => moveItem(item.id, 'done')}
-                              className="mt-0.5 text-[#71717a] hover:text-[#34d399] transition-colors"
+                              className="mt-0.5 text-text-secondary hover:text-success transition-colors"
                               title="Mark as done"
                             >
                               <Circle size={16} />
                             </button>
-                            <span className="flex-1 text-sm font-medium text-white/90 break-words">{item.title}</span>
-                            <button onClick={() => moveItem(item.id, 'inbox')} className="opacity-0 group-hover:opacity-100 p-1 text-[#71717a] hover:text-white transition-colors" title="Move back to inbox">
+                            <span className="flex-1 text-sm font-medium text-text-primary break-words">{item.title}</span>
+                            <button onClick={() => moveItem(item.id, 'inbox')} className="opacity-0 group-hover:opacity-100 p-1 text-text-secondary hover:text-text-primary transition-colors" title="Move back to inbox">
                               <Inbox size={14} />
                             </button>
                           </div>
@@ -234,35 +234,35 @@ export default function SavedTab() {
               </div>
               
               {currentCount === 0 && (
-                <div className="p-12 text-center border border-dashed border-white/10 rounded-3xl">
-                  <LayoutGrid className="mx-auto text-[#71717a] mb-4" size={32} />
-                  <p className="text-[#a1a1aa] font-medium mb-1">Your board is empty.</p>
-                  <p className="text-[#71717a] text-sm">Move items from your inbox to start working on them.</p>
+                <div className="p-12 text-center border border-dashed border-border rounded-xl">
+                  <LayoutGrid className="mx-auto text-text-secondary mb-4" size={32} />
+                  <p className="text-text-muted font-medium mb-1">Your board is empty.</p>
+                  <p className="text-text-secondary text-sm">Move items from your inbox to start working on them.</p>
                 </div>
               )}
             </div>
           ) : (
             <div className="space-y-8">
               <div>
-                <h3 className="text-lg font-semibold text-white/90 mb-4 flex items-center gap-2">
+                <h3 className="text-h3 font-semibold text-text-primary mb-4 flex items-center gap-2">
                   Inbox
-                  <span className="text-xs bg-white/10 px-2 py-0.5 rounded-full text-[#a1a1aa] font-mono">{inboxCount}</span>
+                  <span className="text-micro bg-surface-2 border border-border px-2 py-0.5 rounded-full text-text-muted font-mono">{inboxCount}</span>
                 </h3>
                 {inboxCount === 0 ? (
-                  <p className="text-sm text-[#71717a] italic">Inbox is clear.</p>
+                  <p className="text-sm text-text-secondary italic">Inbox is clear.</p>
                 ) : (
                   <div className="space-y-2">
                     {savedItems.filter(s => s.status === 'inbox').map(item => (
-                      <div key={item.id} className="group flex justify-between items-center p-3 bg-white/[0.02] border border-white/[0.05] rounded-xl hover:bg-white/[0.04]">
+                      <div key={item.id} className="group flex justify-between items-center p-3 bg-surface-1 border border-border rounded-sm hover:bg-surface-2 shadow-1">
                         <div className="flex items-center gap-3">
-                          <span className="text-xs font-bold text-[#a1a1aa] uppercase tracking-wider w-20 truncate">{item.category}</span>
-                          <span className="text-sm font-medium text-white/90 truncate max-w-[200px] sm:max-w-xs">{item.title}</span>
+                          <span className="text-micro font-bold text-text-muted uppercase tracking-wider w-20 truncate">{item.category}</span>
+                          <span className="text-sm font-medium text-text-primary truncate max-w-[200px] sm:max-w-xs">{item.title}</span>
                         </div>
                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => moveItem(item.id, 'current')} className="p-1.5 bg-[#38bdf8]/10 text-[#38bdf8] hover:bg-[#38bdf8]/20 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors">
+                          <button onClick={() => moveItem(item.id, 'current')} className="p-1.5 bg-accent-soft text-accent hover:bg-accent-soft/80 rounded-sm text-xs font-bold flex items-center gap-1 transition-colors">
                             Start <ArrowRight size={12} />
                           </button>
-                          <button onClick={() => deleteSavedItem(item.id)} className="p-1.5 text-[#71717a] hover:text-red-400 rounded-lg transition-colors">
+                          <button onClick={() => deleteSavedItem(item.id)} className="p-1.5 text-text-secondary hover:text-danger rounded-sm transition-colors">
                             <Trash2 size={14} />
                           </button>
                         </div>
@@ -273,22 +273,22 @@ export default function SavedTab() {
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold text-white/90 mb-4 flex items-center gap-2">
+                <h3 className="text-h3 font-semibold text-text-primary mb-4 flex items-center gap-2">
                   Recently Done
-                  <span className="text-xs bg-white/10 px-2 py-0.5 rounded-full text-[#a1a1aa] font-mono">{doneCount}</span>
+                  <span className="text-micro bg-surface-2 border border-border px-2 py-0.5 rounded-full text-text-muted font-mono">{doneCount}</span>
                 </h3>
                 {doneCount === 0 ? (
-                  <p className="text-sm text-[#71717a] italic">Nothing completed yet.</p>
+                  <p className="text-sm text-text-secondary italic">Nothing completed yet.</p>
                 ) : (
                   <div className="space-y-2">
                     {savedItems.filter(s => s.status === 'done').map(item => (
-                      <div key={item.id} className="group flex justify-between items-center p-3 bg-white/[0.01] border border-white/[0.02] rounded-xl opacity-70 hover:opacity-100 transition-opacity">
+                      <div key={item.id} className="group flex justify-between items-center p-3 bg-surface-1 border border-border rounded-sm opacity-70 hover:opacity-100 transition-opacity">
                         <div className="flex items-center gap-3">
-                          <CheckCircle2 size={16} className="text-[#34d399]" />
-                          <span className="text-xs font-bold text-[#a1a1aa] uppercase tracking-wider w-20 truncate">{item.category}</span>
-                          <span className="text-sm font-medium text-white/60 line-through truncate max-w-[200px] sm:max-w-[250px]">{item.title}</span>
+                          <CheckCircle2 size={16} className="text-success" />
+                          <span className="text-micro font-bold text-text-muted uppercase tracking-wider w-20 truncate">{item.category}</span>
+                          <span className="text-sm font-medium text-text-secondary line-through truncate max-w-[200px] sm:max-w-[250px]">{item.title}</span>
                         </div>
-                        <button onClick={() => deleteSavedItem(item.id)} className="opacity-0 group-hover:opacity-100 p-1.5 text-[#71717a] hover:text-red-400 rounded-lg transition-colors">
+                        <button onClick={() => deleteSavedItem(item.id)} className="opacity-0 group-hover:opacity-100 p-1.5 text-text-secondary hover:text-danger rounded-sm transition-colors">
                           <Trash2 size={14} />
                         </button>
                       </div>
