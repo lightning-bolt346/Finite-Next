@@ -2,29 +2,41 @@
 
 import { useState } from 'react';
 import { useStore } from '../lib/store';
+import { useTasks } from '../lib/contexts/TaskContext';
 import { differenceInDays, format, subDays, parseISO, isSameDay } from 'date-fns';
-import { Flame, Trophy, Clock, CalendarDays } from 'lucide-react';
+import { Flame, Trophy, Clock, CalendarDays, History } from 'lucide-react';
 import SessionSetup from './focus/SessionSetup';
 import TimerOverlay from './focus/TimerOverlay';
 import SessionOutcomeModal from './focus/SessionOutcomeModal';
 import FocusHeatmap from './focus/FocusHeatmap';
 
 export default function FocusTab() {
-  const { focusSessions, addFocusSession } = useStore();
+  const { focusSessions, addFocusSession, goals } = useStore();
+  const { tasks } = useTasks();
   
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [showOutcome, setShowOutcome] = useState(false);
   
   const [sessionConfig, setSessionConfig] = useState({
     durationMinutes: 25,
-    type: 'Deep Work 🧠',
+    type: 'Deep Work',
     intention: '',
     linkedTask: null as string | null,
-    linkedGoal: null as string | null
+    linkedGoal: null as string | null,
+    breakMinutes: 5,
+    numBreaks: 1
   });
 
-  const handleStartSession = (durationMinutes: number, type: string, intention: string, linkedTask: string | null, linkedGoal: string | null) => {
-    setSessionConfig({ durationMinutes, type, intention, linkedTask, linkedGoal });
+  const handleStartSession = (
+    durationMinutes: number, 
+    type: string, 
+    intention: string, 
+    linkedTask: string | null, 
+    linkedGoal: string | null, 
+    breakMinutes: number,
+    numBreaks: number
+  ) => {
+    setSessionConfig({ durationMinutes, type, intention, linkedTask, linkedGoal, breakMinutes, numBreaks });
     setIsSessionActive(true);
   };
 
@@ -73,14 +85,20 @@ export default function FocusTab() {
 
   const totalMins = focusSessions.reduce((acc, s) => acc + s.durationMinutes, 0);
 
+  const linkedTaskObj = sessionConfig.linkedTask ? tasks.find(t => t.id === sessionConfig.linkedTask) : null;
+  const linkedGoalObj = sessionConfig.linkedGoal ? goals.find(g => g.id === sessionConfig.linkedGoal) : null;
+  const linkedName = linkedTaskObj ? linkedTaskObj.title : (linkedGoalObj ? linkedGoalObj.title : null);
+
   return (
     <div className="pb-24">
       {isSessionActive && (
         <TimerOverlay 
           durationMinutes={sessionConfig.durationMinutes}
+          breakMinutes={sessionConfig.breakMinutes}
+          numBreaks={sessionConfig.numBreaks}
           sessionType={sessionConfig.type}
           intention={sessionConfig.intention}
-          linkedName={null}
+          linkedName={linkedName}
           onComplete={handleSessionComplete}
           onCancel={handleSessionCancel}
         />
@@ -119,6 +137,55 @@ export default function FocusTab() {
       </div>
 
       <FocusHeatmap sessions={focusSessions} />
+
+      {/* Focus History Log Section */}
+      <div className="mt-8 bg-surface-1 border border-border rounded-2xl p-6 shadow-1 select-none">
+         <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2">
+               <History size={16} className="text-accent" />
+               <h3 className="text-sm font-extrabold text-text-primary uppercase tracking-tight">Recent Sessions Log</h3>
+            </div>
+            <span className="text-[10px] uppercase font-bold text-text-muted bg-surface-2 border border-border rounded-full px-2.5 py-0.5">
+               Total: {focusSessions.length}
+            </span>
+         </div>
+
+         {sortedSessions.length > 0 ? (
+            <div className="space-y-3">
+               {sortedSessions.slice(0, 5).map((session) => (
+                  <div key={session.id} className="p-4 bg-surface-2/45 border border-border hover:border-accent/15 rounded-xl transition-all hover:scale-[1.005] flex flex-col md:flex-row md:items-center md:justify-between gap-3 shadow-xs">
+                     <div className="space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                           <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase select-none ${
+                              session.title === 'Deep Work' ? 'bg-accent/10 text-accent border border-accent/15' :
+                              session.title === 'Creative Work' ? 'bg-violet-900/10 text-violet-400 border border-violet-900/20' :
+                              session.title === 'Learning' ? 'bg-success/10 text-success border border-success/15' :
+                              'bg-amber-500/10 text-amber-500 border border-amber-500/15'
+                           }`}>
+                              {session.title || 'Focus Session'}
+                           </span>
+                           <span className="text-xs font-bold text-text-primary">{session.durationMinutes} min focus</span>
+                        </div>
+                        {session.outcome && (
+                           <p className="text-xs text-text-secondary pl-0.5 pt-1 font-medium italic">
+                              "{session.outcome}"
+                           </p>
+                        )}
+                     </div>
+                     <span className="text-[10px] text-text-muted font-mono self-end md:self-center font-bold">
+                        {format(new Date(session.createdAt), 'MMM d, yyyy · h:mm a')}
+                     </span>
+                  </div>
+               ))}
+            </div>
+         ) : (
+            <div className="py-8 text-center rounded-xl border border-dashed border-border/80 bg-surface-1/50">
+               <span className="text-xs text-text-muted italic block">
+                  No focus sessions recorded yet. Customize and start your first session above!
+               </span>
+            </div>
+         )}
+      </div>
     </div>
   );
 }

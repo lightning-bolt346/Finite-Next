@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 const SOUND_URLS: Record<string, string> = {
   rain: 'https://cdn.freesound.org/previews/186/186711_321967-lq.mp3',
   heavy_rain: 'https://cdn.freesound.org/previews/235/235921_4387220-lq.mp3',

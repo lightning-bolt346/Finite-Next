@@ -85,6 +85,8 @@ export interface WeekendWant {
   feel?: string;
   createdAt: number;
   closedAt?: number;
+  date?: string;
+  time?: string;
 }
 
 export type Theme = 'midnight' | 'solar' | 'forest' | 'light' | 'mono' | 'sepia' | 'lavender' | 'ocean' | 'sage' | 'mist';

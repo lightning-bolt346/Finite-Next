@@ -11,7 +11,14 @@ export default function FocusHeatmap({ sessions }: FocusHeatmapProps) {
   const [view, setView] = useState<'day' | 'week' | 'month'>('week');
 
   const renderWeekView = () => {
-    // 12 weeks back = 84 days
+    const today = new Date();
+    const daysToShow = 84; 
+    const startDate = subDays(today, daysToShow - 1);
+    
+    // Calculate empty padding cells for the first column to align with day of week (Sunday = 0)
+    const paddingStart = startDate.getDay();
+    const totalCells = paddingStart + daysToShow;
+
     return (
       <div className="flex gap-2 mt-6 overflow-x-auto pb-4 scrollbar-none items-end">
         <div className="flex flex-col gap-1 md:gap-[5px] text-[10px] text-text-muted font-bold text-right pr-2">
@@ -24,8 +31,12 @@ export default function FocusHeatmap({ sessions }: FocusHeatmapProps) {
             <span className="h-4 md:h-5">Sat</span>
         </div>
         <div className="grid grid-rows-7 grid-flow-col gap-1 md:gap-[5px]">
-        {Array.from({ length: 84 }).map((_, i) => {
-          const d = subDays(new Date(), 83 - i);
+        {Array.from({ length: totalCells }).map((_, i) => {
+          if (i < paddingStart) {
+             return <div key={`empty-${i}`} className="w-4 h-4 md:w-5 md:h-5" />;
+          }
+          
+          const d = subDays(startDate, -(i - paddingStart));
           const mins = sessions.filter(s => isSameDay(parseISO(s.date), d)).reduce((sum, s) => sum + s.durationMinutes, 0);
           const intensity = Math.min(mins / 120, 1);
           
@@ -131,7 +142,7 @@ export default function FocusHeatmap({ sessions }: FocusHeatmapProps) {
         const hasSession = sessions.some(s => isSameDay(parseISO(s.date), d));
         if (hasSession) daysWithFocus++;
     }
-    const goal = 5;
+    const goal = 7;
     const progress = Math.min(1, daysWithFocus / goal);
     const radius = 36;
     const circ = 2 * Math.PI * radius;
@@ -146,7 +157,7 @@ export default function FocusHeatmap({ sessions }: FocusHeatmapProps) {
             </svg>
             <div>
                 <h4 className="text-sm font-bold text-text-primary mb-1 uppercase tracking-wider">Weekly Consistency</h4>
-                <p className="text-sm text-text-muted mb-2 font-medium">You hit your focus goal <span className="text-text-primary font-bold">{daysWithFocus}/{goal}</span> days this rolling week.</p>
+                <p className="text-sm text-text-muted mb-2 font-medium">You hit your focus goal <span className="text-text-primary font-bold">{daysWithFocus}/{goal}</span> days this rolling week. Let's aim for no days off!</p>
             </div>
         </div>
     );

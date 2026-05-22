@@ -2,105 +2,466 @@
 
 import { useState } from 'react';
 import { useStore } from '../../lib/store';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, History, Sparkles, Check, Trash2, Calendar, Clock, Smile, Heart, MessageCircle } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 
 export default function WeekendWants() {
   const { weekendWants, addWeekendWant, updateWeekendWant, removeWeekendWant } = useStore();
 
-  const [newWant, setNewWant] = useState("");
-  const [reflectingId, setReflectingId] = useState<string | null>(null);
-  const [reflectionFeel, setReflectionFeel] = useState("");
+  const [isAdding, setIsAdding] = useState(false);
+  const [newWantText, setNewWantText] = useState("");
+  const [newWantDate, setNewWantDate] = useState("");
+  const [newWantTime, setNewWantTime] = useState("");
+
+  const [reflectingWantId, setReflectingWantId] = useState<string | null>(null);
+  const [enjoyText, setEnjoyText] = useState("");
+  const [feelText, setFeelText] = useState("");
+
+  const [showHistory, setShowHistory] = useState(false);
 
   const activeWants = weekendWants.filter(w => w.status === 'open');
+  const pastWants = weekendWants.filter(w => w.status !== 'open').sort((a, b) => (b.closedAt || 0) - (a.closedAt || 0));
 
   const handleAddWant = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newWant.trim() && activeWants.length < 5) {
-      addWeekendWant({
-        id: crypto.randomUUID(),
-        text: newWant.trim(),
-        status: 'open',
-        createdAt: Date.now()
-      });
-      setNewWant("");
+    if (!newWantText.trim()) return;
+    if (activeWants.length >= 5) {
+      alert("Weekend wants are capped at a cozy list of 5 things to keep things simple and pressure-free.");
+      return;
     }
+
+    addWeekendWant({
+      id: crypto.randomUUID(),
+      text: newWantText.trim(),
+      status: 'open',
+      createdAt: Date.now(),
+      date: newWantDate || undefined,
+      time: newWantTime || undefined,
+    });
+
+    setNewWantText("");
+    setNewWantDate("");
+    setNewWantTime("");
+    setIsAdding(false);
   };
 
   const handleWantAction = (id: string, action: 'done' | 'missed') => {
-    updateWeekendWant(id, { status: action, closedAt: Date.now() });
     if (action === 'done') {
-      setReflectingId(id);
-      setReflectionFeel('');
+      setReflectingWantId(id);
+      setEnjoyText('');
+      setFeelText('');
+    } else {
+      updateWeekendWant(id, { status: 'missed', closedAt: Date.now() });
     }
   };
 
   const handleReflectionSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reflectingId) return;
-    updateWeekendWant(reflectingId, { feel: reflectionFeel });
-    setReflectingId(null);
+    if (!reflectingWantId) return;
+
+    updateWeekendWant(reflectingWantId, {
+      status: 'done',
+      closedAt: Date.now(),
+      enjoy: enjoyText.trim() || undefined,
+      feel: feelText.trim() || undefined,
+    });
+
+    setReflectingWantId(null);
+  };
+
+  const suggestions = [
+     "Bake sourdough bread 🥖",
+     "Walk in the botanical garden 🌅",
+     "Browse a local bookstore 📚",
+  ];
+
+  const selectSuggestion = (sug: string) => {
+     setNewWantText(sug);
+     setIsAdding(true);
   };
 
   return (
-    <div className="p-5 bg-surface-1 border border-warning/20 rounded-lg relative overflow-hidden flex flex-col gap-2">
-      <div className="absolute inset-0 bg-gradient-to-br from-warning-soft to-transparent pointer-events-none" />
-      <h2 className="text-label font-semibold text-warning">Weekend Wants</h2>
-      <p className="text-xs text-text-muted">Not a productivity list.</p>
+    <div className="p-6 bg-gradient-to-br from-surface-1 via-surface-1 to-warning-soft/10 border border-border hover:border-warning/30 rounded-2xl relative overflow-hidden flex flex-col gap-4 shadow-1 transition-all group select-none">
       
-      <div className="space-y-2 mt-2 z-10 relative">
-        <AnimatePresence>
-          {reflectingId && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mb-4">
-              <div className="p-3 bg-surface-2 rounded-md border border-border mt-2">
-                <h4 className="text-xs font-bold text-text-primary mb-2">How was it?</h4>
-                <form onSubmit={handleReflectionSubmit}>
-                  <textarea 
-                    autoFocus
-                    value={reflectionFeel}
-                    onChange={(e) => setReflectionFeel(e.target.value)}
-                    placeholder="What did you enjoy?"
-                    className="w-full bg-surface-3 border border-border rounded-sm px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-warning resize-none mb-2"
-                    rows={2}
-                  />
-                  <button type="submit" className="px-2 py-1 bg-warning/20 text-warning rounded-sm text-xs font-semibold hover:bg-warning/30 transition-colors">
-                    Save
-                  </button>
-                </form>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+      {/* Background Soft Glow Decor */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-warning-soft/30 to-transparent blur-2xl rounded-full pointer-events-none" />
 
-        {activeWants.map((want) => (
-          <div key={want.id} className="flex justify-between items-center group bg-surface-2 rounded-sm px-2 py-1.5 border border-border/50">
-            <span className="text-xs text-text-primary">{want.text}</span>
-            <div className="opacity-0 group-hover:opacity-100 flex gap-1 transition-opacity">
-              <button type="button" onClick={() => handleWantAction(want.id, 'done')} className="px-1.5 py-0.5 bg-success-soft text-success rounded-xs text-[9px] font-bold uppercase hover:bg-success/30">Done</button>
-              <button type="button" onClick={() => handleWantAction(want.id, 'missed')} className="px-1.5 py-0.5 bg-danger-soft text-danger rounded-xs text-[9px] font-bold uppercase hover:bg-danger/30">Miss</button>
-              <button type="button" onClick={() => removeWeekendWant(want.id)} className="p-0.5 text-text-muted hover:text-danger">
-                <X size={12} />
-              </button>
-            </div>
+      {/* Header Container */}
+      <div className="flex items-start justify-between z-10 relative">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+             <h2 className="text-base font-bold text-text-primary tracking-tight">Weekend Wants</h2>
+             <span className="text-xs">🍹</span>
           </div>
-        ))}
-        {activeWants.length === 0 && <span className="text-xs text-text-muted italic block py-2">Empty. Add something fun.</span>}
+          <p className="text-xs text-text-secondary leading-tight">Casual planning/leisure list.</p>
+        </div>
+        
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          {/* History Button */}
+          <button 
+             onClick={() => setShowHistory(true)}
+             title="Logs History"
+             className="p-1.5 rounded-full hover:bg-surface-2 text-text-muted hover:text-text-primary transition-all cursor-pointer"
+          >
+             <History size={14} />
+          </button>
+          
+          {/* Mono Live Count */}
+          <span className="bg-warning-soft/40 border border-warning/10 text-warning px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono shadow-xs">
+             {activeWants.length}/5
+          </span>
+        </div>
       </div>
 
-      {activeWants.length < 5 && (
-        <form onSubmit={handleAddWant} className="flex gap-2 mt-2 z-10 relative">
-          <input 
-            type="text"
-            value={newWant}
-            onChange={e => setNewWant(e.target.value)}
-            placeholder="e.g. Bake bread"
-            className="flex-1 bg-surface-2 border border-border rounded-sm px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-warning transition-colors"
-          />
-          <button type="submit" className="px-2 py-1.5 bg-warning/20 text-warning rounded-sm hover:bg-warning/30 transition-colors">
-            <Plus size={14} />
-          </button>
-        </form>
-      )}
+      {/* List / Empty State */}
+      <div className="space-y-2.5 relative z-10 flex-1">
+        <AnimatePresence initial={false}>
+          {activeWants.map((want) => (
+            <motion.div 
+              key={want.id}
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="group/item bg-surface-2/65 hover:bg-surface-2 border border-border/80 hover:border-warning/20 p-3.5 rounded-xl flex items-center justify-between transition-all shadow-xs"
+            >
+              <div className="min-w-0 pr-4">
+                 <span className="text-sm font-medium text-text-primary leading-tight block truncate group-hover/item:text-warning transition-colors">{want.text}</span>
+                 {(want.date || want.time) && (
+                    <div className="flex items-center gap-2 mt-1 text-[10px] text-text-muted font-mono">
+                      {want.date && (
+                         <span className="flex items-center gap-1">
+                            <Calendar size={10} className="text-warning-muted" /> {want.date}
+                         </span>
+                      )}
+                      {want.time && (
+                         <span className="flex items-center gap-1">
+                            <Clock size={10} className="text-warning-muted" /> {want.time}
+                         </span>
+                      )}
+                    </div>
+                 )}
+              </div>
+
+              {/* Action options */}
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                 {/* Done pill */}
+                 <button 
+                    onClick={() => handleWantAction(want.id, 'done')}
+                    className="px-2.5 py-1 text-[10px] font-extrabold rounded-full bg-success-soft text-success border border-success/15 hover:bg-success/20 transition-all cursor-pointer hover:scale-105 active:scale-95"
+                 >
+                    Done
+                 </button>
+                 {/* Missed pill */}
+                 <button 
+                    onClick={() => handleWantAction(want.id, 'missed')}
+                    className="px-2.5 py-1 text-[10px] font-extrabold rounded-full bg-danger-soft/40 text-danger border border-danger/15 hover:bg-danger/20 transition-all cursor-pointer hover:scale-105 active:scale-95"
+                 >
+                    Miss
+                 </button>
+                 {/* Delete mini cross */}
+                 <button 
+                    onClick={() => removeWeekendWant(want.id)}
+                    className="p-1 rounded-full text-text-muted hover:text-danger hover:bg-surface-3 transition-colors cursor-pointer"
+                    title="Remove item"
+                 >
+                    <Trash2 size={12} />
+                 </button>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+
+        {activeWants.length === 0 && (
+           <div className="py-6 px-4 text-center rounded-2xl border border-dashed border-border/70 bg-surface-1/50 flex flex-col items-center justify-center">
+              <Sparkles size={16} className="text-warning-muted/70 mb-2 animate-pulse" />
+              <p className="text-xs text-text-secondary leading-normal mb-3 max-w-[200px]">
+                 Nothing planned yet. What cozy things would you like to explore?
+              </p>
+              
+              <div className="flex flex-col gap-1.5 w-full">
+                 {suggestions.map((sug, idx) => (
+                    <button 
+                       key={idx}
+                       onClick={() => selectSuggestion(sug)}
+                       className="py-1.5 px-3 rounded-lg bg-surface-1 border border-border/70 hover:border-warning/30 hover:bg-surface-2 transition-all text-left text-[11px] text-text-primary block truncate cursor-pointer hover:scale-[1.01]"
+                    >
+                       💡 {sug}
+                    </button>
+                 ))}
+              </div>
+           </div>
+        )}
+      </div>
+
+      {/* Expandable Add trigger */}
+      <div className="z-10 relative">
+        <AnimatePresence>
+          {isAdding ? (
+             <motion.form 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                onSubmit={handleAddWant} 
+                className="space-y-3 bg-surface-2/65 p-4 rounded-xl border border-border/90"
+             >
+                <div className="space-y-1">
+                   <label className="text-[10px] text-text-muted font-bold uppercase tracking-wider block">Cozy Idea</label>
+                   <input 
+                      type="text"
+                      required
+                      value={newWantText}
+                      onChange={e => setNewWantText(e.target.value)}
+                      placeholder="e.g. Visit farmers market..."
+                      className="w-full bg-surface-1 border border-border rounded-lg px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-warning/80 transition-all font-medium"
+                   />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                   <div className="space-y-1">
+                      <label className="text-[10px] text-text-muted font-bold uppercase tracking-wider block">Optional Date</label>
+                      <input 
+                         type="date"
+                         value={newWantDate}
+                         onChange={e => setNewWantDate(e.target.value)}
+                         className="w-full bg-surface-1 border border-border rounded-lg px-2.5 py-1.5 text-xs text-text-primary focus:outline-none focus:border-warning/80 transition-all cursor-pointer font-medium"
+                      />
+                   </div>
+                   <div className="space-y-1">
+                      <label className="text-[10px] text-text-muted font-bold uppercase tracking-wider block">Optional Time</label>
+                      <input 
+                         type="time"
+                         value={newWantTime}
+                         onChange={e => setNewWantTime(e.target.value)}
+                         className="w-full bg-surface-1 border border-border rounded-lg px-2.5 py-1.5 text-xs text-text-primary focus:outline-none focus:border-warning/80 transition-all cursor-pointer font-medium"
+                      />
+                   </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-1.5">
+                   <button 
+                      type="button" 
+                      onClick={() => {
+                        setIsAdding(false);
+                        setNewWantText("");
+                      }}
+                      className="px-3 py-1.5 text-xs font-bold text-text-muted hover:text-text-primary transition-colors cursor-pointer"
+                   >
+                      Cancel
+                   </button>
+                   <button 
+                      type="submit"
+                      className="px-4 py-1.5 bg-warning text-surface-1 hover:bg-warning-hover text-xs font-extrabold rounded-lg transition-colors cursor-pointer shadow-xs shadow-warning/10"
+                   >
+                      Save Want
+                   </button>
+                </div>
+             </motion.form>
+          ) : (
+             activeWants.length < 5 && (
+                <button 
+                   onClick={() => setIsAdding(true)}
+                   className="w-full py-2.5 bg-surface-2/40 hover:bg-surface-2/70 hover:border-warning/20 border border-dashed border-border text-center rounded-xl flex items-center justify-center gap-1.5 text-text-secondary hover:text-warning text-xs font-bold transition-all cursor-pointer hover:scale-[1.005] active:scale-95"
+                >
+                   <Plus size={14} /> Add Cozy Want
+                </button>
+             )
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* REFLECTION INPUT DIALOG PANEL */}
+      <AnimatePresence>
+         {reflectingWantId && (() => {
+            const reflectedWant = weekendWants.find(w => w.id === reflectingWantId);
+            if (!reflectedWant) return null;
+
+            return (
+               <div className="fixed inset-0 z-[110] bg-bg/85 backdrop-blur-sm flex items-center justify-center p-4">
+                  <motion.div 
+                     initial={{ opacity: 0, scale: 0.95, y: 15 }} 
+                     animate={{ opacity: 1, scale: 1, y: 0 }}
+                     exit={{ opacity: 0, scale: 0.95, y: 15 }}
+                     className="w-full max-w-md bg-surface-1 border border-border rounded-2xl shadow-2 p-6 overflow-hidden relative select-none"
+                     onClick={e => e.stopPropagation()}
+                  >
+                     {/* Background Color Glow */}
+                     <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-success-soft/30 to-transparent blur-xl rounded-full pointer-events-none" />
+
+                     <div className="flex items-start justify-between mb-4">
+                        <div className="flex gap-2 items-center">
+                           <div className="w-8 h-8 rounded-full bg-success-soft/35 flex items-center justify-center text-success">
+                              <Smile size={16} />
+                           </div>
+                           <div>
+                              <h3 className="text-sm font-extrabold text-text-primary uppercase tracking-tight">Cozy Reflection</h3>
+                              <p className="text-[11px] text-text-muted">A moment of self-discovery.</p>
+                           </div>
+                        </div>
+                        <button 
+                           onClick={() => setReflectingWantId(null)} 
+                           className="text-text-muted hover:text-text-primary p-1 rounded-full hover:bg-surface-2 transition-colors cursor-pointer"
+                        >
+                           <X size={16} />
+                        </button>
+                     </div>
+
+                     <div className="bg-surface-2 p-3.5 rounded-xl border border-border/80 text-xs text-text-primary mb-5 font-medium italic block text-center">
+                        "{reflectedWant.text}"
+                     </div>
+
+                     <form onSubmit={handleReflectionSubmit} className="space-y-4">
+                        <div className="space-y-1.5">
+                           <label className="text-micro text-text-muted font-bold uppercase tracking-wider flex items-center gap-1">
+                              <Heart size={10} className="text-success" /> What did you enjoy?
+                           </label>
+                           <textarea
+                              required
+                              rows={2}
+                              value={enjoyText}
+                              onChange={e => setEnjoyText(e.target.value)}
+                              placeholder="e.g. Loved smelling the fresh basil, chatting with neighbors..."
+                              className="w-full bg-surface-2 border border-border focus:border-success/80 rounded-xl p-3 text-xs text-text-primary focus:outline-none resize-none transition-colors"
+                           />
+                        </div>
+
+                        <div className="space-y-1.5">
+                           <label className="text-micro text-text-muted font-bold uppercase tracking-wider flex items-center gap-1">
+                              <MessageCircle size={10} className="text-accent" /> How did you feel?
+                           </label>
+                           <textarea
+                              required
+                              rows={2}
+                              value={feelText}
+                              onChange={e => setFeelText(e.target.value)}
+                              placeholder="e.g. Grounded, pressure-free, completely refreshed..."
+                              className="w-full bg-surface-2 border border-border focus:border-accent/80 rounded-xl p-3 text-xs text-text-primary focus:outline-none resize-none transition-colors"
+                           />
+                        </div>
+
+                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/60">
+                           <button 
+                              type="button" 
+                              onClick={() => setReflectingWantId(null)}
+                              className="px-3.5 py-1.5 text-xs font-bold text-text-muted hover:text-text-primary transition-colors cursor-pointer"
+                           >
+                              Dismiss
+                           </button>
+                           <button 
+                              type="submit"
+                              className="px-5 py-2 bg-success text-surface-1 hover:bg-success/90 text-xs font-extrabold rounded-full transition-colors cursor-pointer shadow-sm active:scale-95"
+                           >
+                              Save Reflection
+                           </button>
+                        </div>
+                     </form>
+                  </motion.div>
+               </div>
+            );
+         })()}
+      </AnimatePresence>
+
+      {/* HISTORIC DIARY DRAWER/MODAL */}
+      <AnimatePresence>
+         {showHistory && (
+            <div className="fixed inset-0 z-[110] bg-bg/85 backdrop-blur-sm flex items-center justify-center p-4">
+               <motion.div 
+                  initial={{ opacity: 0, scale: 0.95, y: 15 }} 
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 15 }}
+                  className="w-full max-w-lg bg-surface-1 border border-border rounded-2xl shadow-2 p-6 relative max-h-[85vh] flex flex-col select-none"
+                  onClick={e => e.stopPropagation()}
+               >
+                  <div className="flex items-start justify-between mb-4 border-b border-border/70 pb-3 flex-shrink-0">
+                     <div className="flex gap-2 items-center">
+                        <div className="w-8 h-8 rounded-full bg-warning-soft/30 flex items-center justify-center text-warning">
+                           <History size={16} />
+                        </div>
+                        <div>
+                           <h3 className="text-sm font-extrabold text-text-primary uppercase tracking-tight">Weekend Wants History</h3>
+                           <p className="text-[11px] text-text-muted">A collection of cozy past memories.</p>
+                        </div>
+                     </div>
+                     <button 
+                        onClick={() => setShowHistory(false)} 
+                        className="text-text-muted hover:text-text-primary p-1 rounded-full hover:bg-surface-2 transition-colors cursor-pointer"
+                     >
+                        <X size={16} />
+                     </button>
+                  </div>
+
+                  {/* History Logs Scroll List */}
+                  <div className="overflow-y-auto space-y-4 pr-1 flex-1 py-1 scrollbar-none">
+                     {pastWants.length > 0 ? (
+                        pastWants.map(want => {
+                          const isDone = want.status === 'done';
+                          return (
+                             <div 
+                                key={want.id} 
+                                className={`p-4 rounded-xl border flex flex-col gap-2 transition-all hover:scale-[1.005] ${isDone ? 'bg-surface-2/45 border-success/15 hover:border-success/30' : 'bg-surface-2/15 border-border/80 opacity-70'}`}
+                             >
+                                <div className="flex items-start justify-between gap-4">
+                                   <div>
+                                      <h4 className="text-sm font-bold text-text-primary">{want.text}</h4>
+                                      {(want.date || want.time) && (
+                                         <div className="flex items-center gap-2 mt-1 text-[10px] text-text-muted font-mono">
+                                            {want.date && <span className="flex items-center gap-0.5"><Calendar size={10} /> {want.date}</span>}
+                                            {want.time && <span className="flex items-center gap-0.5"><Clock size={10} /> {want.time}</span>}
+                                         </div>
+                                      )}
+                                   </div>
+
+                                   <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase select-none tracking-wider ${isDone ? 'bg-success-soft text-success' : 'bg-danger-soft text-danger'}`}>
+                                      {isDone ? 'Done' : 'Missed'}
+                                   </span>
+                                </div>
+
+                                {/* Completed reflections details */}
+                                {isDone && (want.enjoy || want.feel) && (
+                                   <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 border-t border-border/50 bg-surface-1/40 p-3 rounded-lg">
+                                      {want.enjoy && (
+                                         <div className="space-y-0.5">
+                                            <span className="text-[10px] text-text-muted uppercase font-bold tracking-wider flex items-center gap-1">
+                                               <Smile size={10} className="text-success" /> Enjoyed
+                                            </span>
+                                            <p className="text-xs text-text-secondary italic leading-relaxed">
+                                               "{want.enjoy}"
+                                            </p>
+                                         </div>
+                                      )}
+                                      {want.feel && (
+                                         <div className="space-y-0.5">
+                                            <span className="text-[10px] text-text-muted uppercase font-bold tracking-wider flex items-center gap-1">
+                                               <Heart size={10} className="text-accent" /> Felt
+                                            </span>
+                                            <p className="text-xs text-text-secondary italic leading-relaxed">
+                                               "{want.feel}"
+                                            </p>
+                                         </div>
+                                      )}
+                                   </div>
+                                )}
+                             </div>
+                          );
+                        })
+                     ) : (
+                        <div className="py-12 text-center">
+                           <p className="text-xs text-text-muted italic">No past weekend memories logged yet.</p>
+                        </div>
+                     )}
+                  </div>
+
+                  <div className="flex justify-end pt-3 border-t border-border/70 flex-shrink-0">
+                     <button 
+                        onClick={() => setShowHistory(false)}
+                        className="px-4 py-2 bg-surface-2 hover:bg-surface-3 text-text-primary text-xs font-bold rounded-lg transition-colors cursor-pointer"
+                     >
+                        Close History
+                     </button>
+                  </div>
+               </motion.div>
+            </div>
+         )}
+      </AnimatePresence>
     </div>
   );
 }

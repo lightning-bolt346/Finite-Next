@@ -50,12 +50,20 @@ export default function DailyCommandSidebar() {
       
       {/* Daily Intention */}
       <div className="bg-surface-1 border border-border rounded-xl p-5 shadow-1 group hover:border-accent/40 transition-colors">
-        <input 
-          type="text"
+        <textarea 
           value={intention}
           onChange={(e) => setIntention(e.target.value)}
           placeholder="What matters most today?"
-          className="w-full bg-transparent border-none text-h3 font-semibold text-text-primary focus:outline-none placeholder:text-text-muted transition-all focus:border-l-4 focus:border-accent focus:pl-3"
+          rows={1}
+          style={{ minHeight: '36px' }}
+          ref={(el) => {
+             if (el) {
+                el.style.height = '36px';
+                const sh = el.scrollHeight;
+                el.style.height = Math.min(sh, 36 * 3) + 'px';
+             }
+          }}
+          className="w-full bg-transparent border-none text-h3 font-semibold text-text-primary focus:outline-none placeholder:text-text-muted transition-all focus:border-l-4 focus:border-accent focus:pl-3 resize-none scrollbar-none"
         />
         <div className={`mt-4 text-xs font-bold tracking-tight rounded-full px-3 py-1.5 inline-flex items-center gap-1.5 ${isAfter6PM ? 'bg-warning/20 text-warning' : 'bg-surface-2 text-text-secondary'}`}>
            <Clock size={12} /> {timeLeftStr}

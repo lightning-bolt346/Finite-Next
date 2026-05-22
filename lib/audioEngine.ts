@@ -107,13 +107,479 @@ class AudioEngine {
     }
   }
 
+  playBell() {
+    this.init();
+    const ctx = this.ctx;
+    if (!ctx) return;
+    if (ctx.state === 'suspended') ctx.resume();
+    
+    // Resonant physical bell
+    const frequencies = [440, 554.37, 659.25, 880]; // A major bell
+    frequencies.forEach((f, idx) => {
+       const osc = ctx.createOscillator();
+       const gain = ctx.createGain();
+       osc.frequency.setValueAtTime(f, ctx.currentTime);
+       osc.connect(gain);
+       gain.connect(ctx.destination);
+       
+       gain.gain.setValueAtTime(0, ctx.currentTime);
+       gain.gain.linearRampToValueAtTime(0.12 / (idx + 1), ctx.currentTime + 0.05);
+       gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 4.0 - idx * 0.5);
+       
+       osc.start();
+       setTimeout(() => {
+          try { osc.stop(); osc.disconnect(); gain.disconnect(); } catch(e){}
+       }, 5000);
+    });
+  }
+
+  private createSyntheticFireplace(ctx: AudioContext, destination: AudioNode) {
+    const humOsc = ctx.createOscillator();
+    const humFilter = ctx.createBiquadFilter();
+    humOsc.type = 'sawtooth';
+    humOsc.frequency.value = 55;
+    humFilter.type = 'lowpass';
+    humFilter.frequency.value = 80;
+    
+    const humGain = ctx.createGain();
+    humGain.gain.value = 0.4;
+    
+    humOsc.connect(humFilter);
+    humFilter.connect(humGain);
+    humGain.connect(destination);
+    humOsc.start();
+    
+    let isStopped = false;
+    const triggerCrackle = () => {
+      if (isStopped) return;
+      const osc = ctx.createOscillator();
+      const filter = ctx.createBiquadFilter();
+      const gain = ctx.createGain();
+      
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(2000 + Math.random() * 4000, ctx.currentTime);
+      
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(3000, ctx.currentTime);
+      filter.Q.value = 10;
+      
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.02 + Math.random() * 0.05, ctx.currentTime + 0.001);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.01 + Math.random() * 0.04);
+      
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(destination);
+      osc.start();
+      
+      setTimeout(() => {
+        try { osc.stop(); osc.disconnect(); filter.disconnect(); gain.disconnect(); } catch(e){}
+      }, 100);
+      
+      setTimeout(triggerCrackle, 50 + Math.random() * 400);
+    };
+    
+    triggerCrackle();
+    
+    return {
+      stop: () => {
+        isStopped = true;
+        try {
+          humOsc.stop();
+          humOsc.disconnect();
+          humFilter.disconnect();
+          humGain.disconnect();
+        } catch(e){}
+      }
+    };
+  }
+
+  private createSyntheticChimes(ctx: AudioContext, destination: AudioNode) {
+    let isStopped = false;
+    const triggerChime = () => {
+      if (isStopped) return;
+      const frequencies = [880, 987.77, 1174.66, 1318.51, 1567.98, 1760];
+      const freq = frequencies[Math.floor(Math.random() * frequencies.length)];
+      
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      
+      const mod = ctx.createOscillator();
+      const modGain = ctx.createGain();
+      mod.frequency.setValueAtTime(freq * 1.5, ctx.currentTime);
+      modGain.gain.setValueAtTime(20, ctx.currentTime);
+      
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.05 + Math.random() * 0.07, ctx.currentTime + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 3 + Math.random() * 4);
+      
+      mod.connect(modGain);
+      modGain.connect(osc.frequency);
+      
+      osc.connect(gain);
+      gain.connect(destination);
+      
+      mod.start();
+      osc.start();
+      
+      setTimeout(() => {
+        try { 
+          osc.stop(); osc.disconnect(); 
+          mod.stop(); mod.disconnect(); 
+          modGain.disconnect(); gain.disconnect(); 
+        } catch(e){}
+      }, 8000);
+      
+      setTimeout(triggerChime, 2000 + Math.random() * 5000);
+    };
+    
+    triggerChime();
+    
+    return {
+      stop: () => {
+        isStopped = true;
+      }
+    };
+  }
+
+  private createSyntheticTibetan(ctx: AudioContext, destination: AudioNode) {
+    const frequencies = [144, 144.5, 288, 432, 576];
+    const oscs: any[] = [];
+    const gains: GainNode[] = [];
+    
+    frequencies.forEach((f, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(f, ctx.currentTime);
+      
+      const lfo = ctx.createOscillator();
+      const lfoGain = ctx.createGain();
+      lfo.frequency.setValueAtTime(0.05 + idx * 0.02, ctx.currentTime);
+      lfoGain.gain.setValueAtTime(0.15, ctx.currentTime);
+      
+      const baseGain = 0.1 / (idx + 1);
+      gain.gain.setValueAtTime(baseGain, ctx.currentTime);
+      
+      lfo.connect(lfoGain);
+      lfoGain.connect(gain.gain);
+      
+      osc.connect(gain);
+      gain.connect(destination);
+      
+      lfo.start();
+      osc.start();
+      
+      oscs.push(osc, lfo);
+      gains.push(gain, lfoGain);
+    });
+    
+    return {
+      stop: () => {
+        oscs.forEach(o => { try{ o.stop(); o.disconnect(); } catch(e){} });
+        gains.forEach(g => g.disconnect());
+      }
+    };
+  }
+
+  private createSyntheticSpace(ctx: AudioContext, destination: AudioNode) {
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const filter = ctx.createBiquadFilter();
+    const lfo = ctx.createOscillator();
+    const lfoGain = ctx.createGain();
+    
+    osc1.type = 'sawtooth';
+    osc1.frequency.setValueAtTime(65, ctx.currentTime);
+    osc2.type = 'triangle';
+    osc2.frequency.setValueAtTime(65.4, ctx.currentTime);
+    
+    filter.type = 'bandpass';
+    filter.Q.value = 4.0;
+    
+    lfo.frequency.setValueAtTime(0.08, ctx.currentTime); 
+    lfoGain.gain.setValueAtTime(150, ctx.currentTime);
+    
+    osc1.connect(filter);
+    osc2.connect(filter);
+    
+    lfo.connect(lfoGain);
+    lfoGain.connect(filter.frequency);
+    
+    const droneGain = ctx.createGain();
+    droneGain.gain.setValueAtTime(0.5, ctx.currentTime);
+    
+    filter.connect(droneGain);
+    droneGain.connect(destination);
+    
+    osc1.start();
+    osc2.start();
+    lfo.start();
+    
+    return {
+      stop: () => {
+        try {
+          osc1.stop(); osc1.disconnect();
+          osc2.stop(); osc2.disconnect();
+          lfo.stop(); lfo.disconnect();
+          filter.disconnect();
+          lfoGain.disconnect();
+          droneGain.disconnect();
+        } catch(e){}
+      }
+    };
+  }
+
+  private createSyntheticLofi(ctx: AudioContext, destination: AudioNode) {
+    let isStopped = false;
+    const chords = [
+      [130.81, 195.99, 246.94, 293.66], 
+      [110.00, 164.81, 220.00, 261.63], 
+      [146.83, 220.00, 261.63, 311.13], 
+      [116.54, 174.61, 233.08, 277.18]  
+    ];
+    let chordIndex = 0;
+    
+    const playNextChord = () => {
+      if (isStopped) return;
+      const notes = chords[chordIndex];
+      chordIndex = (chordIndex + 1) % chords.length;
+      
+      const oscs: OscillatorNode[] = [];
+      const gains: GainNode[] = [];
+      
+      notes.forEach((f, idx) => {
+        const osc = ctx.createOscillator();
+        const filter = ctx.createBiquadFilter();
+        const gain = ctx.createGain();
+        
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(f, ctx.currentTime);
+        
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(600, ctx.currentTime);
+        
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.04 - idx*0.005, ctx.currentTime + 1.0);
+        gain.gain.setValueAtTime(0.04 - idx*0.005, ctx.currentTime + 4.0);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 7.5);
+        
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(destination);
+        
+        osc.start();
+        oscs.push(osc);
+        gains.push(gain);
+      });
+      
+      setTimeout(() => {
+        oscs.forEach(o => { try{ o.stop(); o.disconnect(); } catch(e){} });
+        gains.forEach(g => g.disconnect());
+      }, 8000);
+      
+      setTimeout(playNextChord, 7000);
+    };
+    
+    playNextChord();
+    return {
+      stop: () => {
+        isStopped = true;
+      }
+    };
+  }
+
+  private createSyntheticCafe(ctx: AudioContext, destination: AudioNode) {
+    const murmur = ctx.createOscillator();
+    const murmurFilter = ctx.createBiquadFilter();
+    murmur.type = 'sawtooth';
+    murmur.frequency.value = 110;
+    murmurFilter.type = 'lowpass';
+    murmurFilter.frequency.value = 150;
+    
+    const murmurGain = ctx.createGain();
+    murmurGain.gain.setValueAtTime(0.2, ctx.currentTime);
+    
+    murmur.connect(murmurFilter);
+    murmurFilter.connect(murmurGain);
+    murmurGain.connect(destination);
+    murmur.start();
+    
+    let isStopped = false;
+    const triggerClink = () => {
+      if (isStopped) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1500 + Math.random() * 2500, ctx.currentTime);
+      
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.015, ctx.currentTime + 0.002);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.15);
+      
+      osc.connect(gain);
+      gain.connect(destination);
+      osc.start();
+      
+      setTimeout(() => {
+        try { osc.stop(); osc.disconnect(); gain.disconnect(); } catch(e){}
+      }, 200);
+      
+      setTimeout(triggerClink, 1000 + Math.random() * 5000);
+    };
+    
+    triggerClink();
+    return {
+      stop: () => {
+        isStopped = true;
+        try {
+          murmur.stop();
+          murmur.disconnect();
+          murmurFilter.disconnect();
+          murmurGain.disconnect();
+        } catch(e){}
+      }
+    };
+  }
+
+  private createSyntheticForest(ctx: AudioContext, destination: AudioNode) {
+    const wind = this.synthesizeNoise('pink');
+    const windSource = ctx.createBufferSource();
+    windSource.buffer = wind;
+    windSource.loop = true;
+    
+    const windFilter = ctx.createBiquadFilter();
+    windFilter.type = 'lowpass';
+    windFilter.frequency.setValueAtTime(200, ctx.currentTime);
+    
+    const windLfo = ctx.createOscillator();
+    const windLfoGain = ctx.createGain();
+    windLfo.frequency.setValueAtTime(0.05, ctx.currentTime);
+    windLfoGain.gain.setValueAtTime(120, ctx.currentTime);
+    
+    windLfo.connect(windLfoGain);
+    windLfoGain.connect(windFilter.frequency);
+    
+    const windGain = ctx.createGain();
+    windGain.gain.setValueAtTime(0.25, ctx.currentTime);
+    
+    windSource.connect(windFilter);
+    windFilter.connect(windGain);
+    windGain.connect(destination);
+    
+    windLfo.start();
+    windSource.start();
+    
+    let isStopped = false;
+    const triggerChirp = () => {
+      if (isStopped) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(2500 + Math.random() * 800, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(4500, ctx.currentTime + 0.15);
+      
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.02, ctx.currentTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.18);
+      
+      osc.connect(gain);
+      gain.connect(destination);
+      osc.start();
+      
+      setTimeout(() => {
+        try { osc.stop(); osc.disconnect(); gain.disconnect(); } catch(e){}
+      }, 300);
+      
+      setTimeout(triggerChirp, 1500 + Math.random() * 4000);
+    };
+    
+    triggerChirp();
+    return {
+      stop: () => {
+        isStopped = true;
+        try {
+          windSource.stop();
+          windSource.disconnect();
+          windFilter.disconnect();
+          windLfo.stop();
+          windLfo.disconnect();
+          windLfoGain.disconnect();
+          windGain.disconnect();
+        } catch(e){}
+      }
+    };
+  }
+
+  private createSyntheticLibrary(ctx: AudioContext, destination: AudioNode) {
+    const hum = ctx.createOscillator();
+    const humFilter = ctx.createBiquadFilter();
+    hum.type = 'sine';
+    hum.frequency.setValueAtTime(60, ctx.currentTime);
+    humFilter.type = 'lowpass';
+    humFilter.frequency.setValueAtTime(70, ctx.currentTime);
+    
+    const humGain = ctx.createGain();
+    humGain.gain.setValueAtTime(0.1, ctx.currentTime);
+    
+    hum.connect(humFilter);
+    humFilter.connect(humGain);
+    humGain.connect(destination);
+    hum.start();
+    
+    let isStopped = false;
+    const triggerPage = () => {
+      if (isStopped) return;
+      const noiseBuf = this.synthesizeNoise('white');
+      const source = ctx.createBufferSource();
+      source.buffer = noiseBuf;
+      
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(2000, ctx.currentTime);
+      
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.015, ctx.currentTime + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.4);
+      
+      source.connect(filter);
+      filter.connect(gain);
+      gain.connect(destination);
+      source.start();
+      
+      setTimeout(() => {
+        try { source.stop(); source.disconnect(); filter.disconnect(); gain.disconnect(); } catch(e){}
+      }, 500);
+      
+      setTimeout(triggerPage, 4000 + Math.random() * 10000);
+    };
+    
+    triggerPage();
+    return {
+      stop: () => {
+        isStopped = true;
+        try {
+          hum.stop();
+          hum.disconnect();
+          humFilter.disconnect();
+          humGain.disconnect();
+        } catch(e){}
+      }
+    };
+  }
+
   async play(trackId: string, volume: number = 0.5) {
     const ctx = this.ensureContext();
     
-    // Create gain node if not exists
     if (!this.nodes.has(trackId)) {
         const gainNode = ctx.createGain();
-        gainNode.gain.value = 0; // Start at 0 for fade in
+        gainNode.gain.setValueAtTime(0, ctx.currentTime);
         gainNode.connect(ctx.destination);
         this.nodes.set(trackId, { source: null, gain: gainNode, volume });
     }
@@ -122,51 +588,136 @@ class AudioEngine {
     nodeData.volume = volume;
     
     if (nodeData.source) {
-       // Already playing, just adjust volume
        nodeData.gain.gain.setTargetAtTime(volume, ctx.currentTime, 0.5);
        return;
     }
 
     if (trackId === 'binaural') {
-        // Binaural beat: 40Hz difference 
-        // e.g. Left 200Hz, Right 240Hz
         const oscL = ctx.createOscillator();
         const oscR = ctx.createOscillator();
-        
         const merger = ctx.createChannelMerger(2);
-        oscL.frequency.value = 200;
-        oscR.frequency.value = 240;
-        
+        oscL.frequency.setValueAtTime(200, ctx.currentTime);
+        oscR.frequency.setValueAtTime(240, ctx.currentTime);
         oscL.connect(merger, 0, 0);
         oscR.connect(merger, 0, 1);
-        
         merger.connect(nodeData.gain);
-        
         oscL.start();
         oscR.start();
-        
-        // We'll store the merger/oscillators in a wrapper if needed, 
-        // but for simplicity we can just attach stop() to one of them
-        const customSource: any = {
-           stop: () => { oscL.stop(); oscR.stop(); merger.disconnect(); }
-        };
-        nodeData.source = customSource as any;
+        const customSource: any = { stop: () => { oscL.stop(); oscR.stop(); merger.disconnect(); } };
+        nodeData.source = customSource;
         nodeData.gain.gain.setTargetAtTime(volume, ctx.currentTime, 0.5);
-    } else {
-        const buffer = await this.fetchOrSynthBuffer(trackId);
-        if (!buffer) return; // Silent fail if fetch failed
-        
-        if (nodeData.source) return; // In case play was called twice while fetching
+        return;
+    }
+
+    if (trackId === 'fireplace') {
+        nodeData.source = this.createSyntheticFireplace(ctx, nodeData.gain) as any;
+        nodeData.gain.gain.setTargetAtTime(volume, ctx.currentTime, 0.5);
+        return;
+    }
+
+    if (trackId === 'chimes') {
+        nodeData.source = this.createSyntheticChimes(ctx, nodeData.gain) as any;
+        nodeData.gain.gain.setTargetAtTime(volume, ctx.currentTime, 0.5);
+        return;
+    }
+
+    if (trackId === 'tibetan') {
+        nodeData.source = this.createSyntheticTibetan(ctx, nodeData.gain) as any;
+        nodeData.gain.gain.setTargetAtTime(volume, ctx.currentTime, 0.5);
+        return;
+    }
+
+    if (trackId === 'space') {
+        nodeData.source = this.createSyntheticSpace(ctx, nodeData.gain) as any;
+        nodeData.gain.gain.setTargetAtTime(volume, ctx.currentTime, 0.5);
+        return;
+    }
+
+    if (trackId === 'lofi') {
+        nodeData.source = this.createSyntheticLofi(ctx, nodeData.gain) as any;
+        nodeData.gain.gain.setTargetAtTime(volume, ctx.currentTime, 0.5);
+        return;
+    }
+
+    if (trackId === 'cafe') {
+        nodeData.source = this.createSyntheticCafe(ctx, nodeData.gain) as any;
+        nodeData.gain.gain.setTargetAtTime(volume, ctx.currentTime, 0.5);
+        return;
+    }
+
+    if (trackId === 'forest') {
+        nodeData.source = this.createSyntheticForest(ctx, nodeData.gain) as any;
+        nodeData.gain.gain.setTargetAtTime(volume, ctx.currentTime, 0.5);
+        return;
+    }
+
+    if (trackId === 'library') {
+        nodeData.source = this.createSyntheticLibrary(ctx, nodeData.gain) as any;
+        nodeData.gain.gain.setTargetAtTime(volume, ctx.currentTime, 0.5);
+        return;
+    }
+
+    if (trackId === 'ocean' || trackId === 'rain' || trackId === 'heavy_rain') {
+        const type = trackId === 'heavy_rain' ? 'brown' : 'pink';
+        const buffer = this.buffers.get(type + '_noise') || this.synthesizeNoise(type as any);
+        this.buffers.set(type + '_noise', buffer);
         
         const source = ctx.createBufferSource();
         source.buffer = buffer;
         source.loop = true;
-        source.connect(nodeData.gain);
-        source.start();
         
-        nodeData.source = source;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        
+        if (trackId === 'ocean') {
+           filter.frequency.setValueAtTime(800, ctx.currentTime);
+           const lfo = ctx.createOscillator();
+           lfo.frequency.setValueAtTime(0.1, ctx.currentTime);
+           const lfoGain = ctx.createGain();
+           lfoGain.gain.setValueAtTime(600, ctx.currentTime);
+           lfo.connect(lfoGain);
+           lfoGain.connect(filter.frequency);
+           
+           const ampLfo = ctx.createOscillator();
+           ampLfo.frequency.setValueAtTime(0.1, ctx.currentTime);
+           const ampGain = ctx.createGain();
+           ampGain.gain.setValueAtTime(0.5, ctx.currentTime);
+           ampLfo.connect(ampGain);
+           
+           const baseGain = ctx.createGain();
+           baseGain.gain.setValueAtTime(0.5, ctx.currentTime);
+           source.connect(filter);
+           filter.connect(baseGain);
+           ampGain.connect(baseGain.gain);
+           baseGain.connect(nodeData.gain);
+           
+           lfo.start();
+           ampLfo.start();
+           source.start();
+           nodeData.source = { stop: () => { source.stop(); lfo.stop(); ampLfo.stop(); filter.disconnect(); } } as any;
+        } else {
+           filter.frequency.setValueAtTime(trackId === 'heavy_rain' ? 1200 : 2500, ctx.currentTime);
+           source.connect(filter);
+           filter.connect(nodeData.gain);
+           source.start();
+           nodeData.source = source;
+        }
         nodeData.gain.gain.setTargetAtTime(volume, ctx.currentTime, 0.5);
+        return;
     }
+    const buffer = await this.fetchOrSynthBuffer(trackId);
+    if (!buffer) return;
+    
+    if (nodeData.source) return;
+    
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.loop = true;
+    source.connect(nodeData.gain);
+    source.start();
+    
+    nodeData.source = source;
+    nodeData.gain.gain.setTargetAtTime(volume, ctx.currentTime, 0.5);
   }
 
   stop(trackId: string) {

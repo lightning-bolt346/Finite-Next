@@ -145,49 +145,52 @@ export default function TaskCenter() {
                  exit={{ opacity: 0, scale: 0.95, height: 0, overflow: 'hidden' }}
                  draggable
                  onDragStartCapture={(e: React.DragEvent<HTMLDivElement>) => e.dataTransfer.setData('taskId', task.id)}
-                 className={`flex items-start gap-4 p-4 rounded-xl border relative group cursor-grab active:cursor-grabbing
-                   ${isP1 ? 'bg-surface-2 border-accent/40 shadow-sm' : 'bg-surface-1 border-border'}
-                   ${isOverdue ? 'bg-danger/5 border-danger/30' : ''}
+                 className={`flex items-center gap-3 px-5 py-3.5 rounded-full border relative group cursor-grab active:cursor-grabbing transition-all hover:scale-[1.005] hover:border-accent/30 shadow-xs
+                   ${isP1 ? 'bg-surface-2 border-accent/20' : 'bg-surface-1 border-border'}
+                   ${isOverdue ? 'bg-danger/5 border-danger/25' : ''}
                  `}
                >
                  {isP1 && (
                    <motion.div 
-                     className="absolute left-0 top-0 bottom-0 w-1 bg-accent rounded-l-xl shadow-[0_0_8px_var(--color-accent)]"
+                     className="absolute left-6 w-1.5 h-1.5 rounded-full bg-accent shadow-[0_0_8px_var(--color-accent)]"
                      animate={{ opacity: [0.5, 1, 0.5] }}
                      transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                    />
                  )}
+                 
                  <motion.button 
                    whileTap={{ scale: 0.8 }}
                    onClick={() => updateTask(task.id, { completed: true })}
-                   className="mt-0.5 w-5 h-5 rounded-full border-2 border-text-muted hover:border-accent transition-colors flex-shrink-0 flex items-center justify-center overflow-hidden"
+                   className={`w-5 h-5 rounded-full border-2 border-text-muted/60 hover:border-accent transition-all flex-shrink-0 flex items-center justify-center overflow-hidden cursor-pointer ${isP1 ? 'ml-4' : ''}`}
+                   title="Complete Task"
                  />
 
-                 <div className="flex-1 min-w-0 pr-8">
-                   <div className="text-sm font-medium text-text-primary group-hover:text-accent transition-colors flex items-center gap-2">
+                 <div className="flex-1 min-w-0 flex items-center gap-3">
+                   <span className="text-sm font-medium text-text-primary group-hover:text-accent transition-colors truncate">
                      {task.title}
-                     <button
-                       onClick={() => updateTask(task.id, { priority: ((task.priority + 1) % 3) as 0|1|2 })}
-                       title="Cycle Priority"
-                       className="flex items-center gap-[2px] opacity-20 hover:opacity-100 group-hover:opacity-60 transition-opacity px-1"
-                     >
-                       <div className={`w-1.5 h-1.5 rounded-full ${task.priority >= 0 ? 'bg-text-secondary' : 'bg-transparent'}`} />
-                       <div className={`w-1.5 h-1.5 rounded-full ${task.priority >= 1 ? 'bg-warning' : 'bg-surface-3'}`} />
-                       <div className={`w-1.5 h-1.5 rounded-full ${task.priority >= 2 ? 'bg-danger' : 'bg-surface-3'}`} />
-                     </button>
-                   </div>
+                   </span>
                    
-                   <div className="flex flex-wrap items-center gap-3 mt-2">
-                      {task.deadline && (
-                        <span className={`text-[10px] font-semibold flex items-center gap-1 ${getDeadlineColor(task.deadline)}`}>
-                          <Calendar size={12} /> {format(parseISO(task.deadline), 'MMM d, h:mm a')}
-                        </span>
-                      )}
-                   </div>
+                   {/* Priority Micro Capsule */}
+                   <button
+                     onClick={() => updateTask(task.id, { priority: ((task.priority + 1) % 3) as 0|1|2 })}
+                     title="Cycle Priority"
+                     className="flex items-center gap-[4px] bg-surface-3/60 hover:bg-surface-3 border border-border/70 rounded-full px-2 py-0.5 transition-colors cursor-pointer flex-shrink-0"
+                   >
+                     <div className={`w-1.5 h-1.5 rounded-full transition-all ${task.priority >= 0 ? (task.priority === 0 ? 'bg-text-secondary' : 'bg-text-muted/60') : 'bg-transparent'}`} />
+                     <div className={`w-1.5 h-1.5 rounded-full transition-all ${task.priority >= 1 ? 'bg-warning' : 'bg-text-muted/20'}`} />
+                     <div className={`w-1.5 h-1.5 rounded-full transition-all ${task.priority >= 2 ? 'bg-danger' : 'bg-text-muted/20'}`} />
+                   </button>
+
+                   {task.deadline && (
+                     <span className={`text-[10px] font-semibold flex items-center gap-1 flex-shrink-0 ${getDeadlineColor(task.deadline)}`}>
+                       <Calendar size={11} /> {format(parseISO(task.deadline), 'MMM d, h:mm a')}
+                     </span>
+                   )}
                  </div>
                  
-                 <div className="absolute right-4 top-4 opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity bg-surface-1 py-1 px-2 rounded-lg shadow-1 border border-border">
-                    <div className="relative text-text-muted hover:text-warning p-1" title="Set Deadline">
+                 {/* Action Capsule */}
+                 <div className="flex items-center gap-2 bg-surface-1 border border-border/80 shadow-sm rounded-full px-3.5 py-1.5 transition-all flex-shrink-0">
+                    <div className="relative text-text-muted hover:text-accent cursor-pointer transition-colors" title="Set Deadline">
                       <Clock size={14} />
                       <input 
                         type="datetime-local" 
@@ -195,7 +198,8 @@ export default function TaskCenter() {
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                       />
                     </div>
-                    <button onClick={() => deleteTask(task.id)} className="text-text-muted hover:text-danger p-1" title="Delete">
+                    <div className="w-[1px] h-3.5 bg-border/65" />
+                    <button onClick={() => deleteTask(task.id)} className="text-text-muted hover:text-danger cursor-pointer transition-colors" title="Delete">
                       <X size={14} />
                     </button>
                  </div>
