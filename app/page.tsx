@@ -13,19 +13,67 @@ import SavedTab from '../components/SavedTab';
 import SettingsModal from '../components/SettingsModal';
 import LandingPage from '../components/LandingPage';
 import { useStore } from '../lib/store';
+import TimerOverlay from '../components/focus/TimerOverlay';
+import SessionOutcomeModal from '../components/focus/SessionOutcomeModal';
+import { saveFocusSessionToFirestore } from '../lib/firebaseSync';
+import { format } from 'date-fns';
 
 import Navigation from '../components/Navigation';
 
 type Tab = 'dashboard' | 'today' | 'focus' | 'goals' | 'saved' | 'reflect' | 'quotes';
 
 export default function AppMain() {
-  const { setupComplete } = useStore();
+  const { 
+    setupComplete,
+    activeFocusSessionId,
+    activeFocusSessionConfig,
+    showOutcome,
+    setActiveFocusSessionId,
+    setActiveFocusSessionConfig,
+    setShowOutcome,
+    addFocusSession,
+  } = useStore();
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [showLanding, setShowLanding] = useState(false);
   
   const [mounted, setMounted] = useState(false);
   const [time, setTime] = useState<Date | null>(null);
+
+  const handleSessionComplete = () => {
+    setShowOutcome(true);
+  };
+
+  const handleSessionCancel = () => {
+    setActiveFocusSessionId(null);
+    setActiveFocusSessionConfig(null);
+  };
+
+  const handleSaveOutcome = async (outcome: string, rating: number) => {
+    if (!activeFocusSessionId || !activeFocusSessionConfig) return;
+
+    const loggedSession = {
+      id: activeFocusSessionId,
+      title: activeFocusSessionConfig.type,
+      outcome,
+      rating,
+      durationMinutes: activeFocusSessionConfig.durationMinutes,
+      date: format(new Date(), 'yyyy-MM-dd'),
+      createdAt: Date.now()
+    };
+
+    addFocusSession(loggedSession);
+
+    try {
+      await saveFocusSessionToFirestore(loggedSession);
+    } catch (err) {
+      console.warn('Network offline fallback cached: ', err);
+    }
+
+    setShowOutcome(false);
+    setActiveFocusSessionId(null);
+    setActiveFocusSessionConfig(null);
+  };
 
   useEffect(() => {
     setTimeout(() => {
@@ -88,6 +136,24 @@ export default function AppMain() {
       </div>
 
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+
+      {activeFocusSessionId && activeFocusSessionConfig && (
+        <TimerOverlay 
+          sessionId={activeFocusSessionId}
+          durationMinutes={activeFocusSessionConfig.durationMinutes}
+          breakMinutes={activeFocusSessionConfig.breakMinutes}
+          numBreaks={activeFocusSessionConfig.numBreaks}
+          sessionType={activeFocusSessionConfig.type}
+          intention={activeFocusSessionConfig.intention}
+          linkedName={activeFocusSessionConfig.linkedName}
+          onComplete={handleSessionComplete}
+          onCancel={handleSessionCancel}
+        />
+      )}
+
+      {showOutcome && (
+        <SessionOutcomeModal onSave={handleSaveOutcome} />
+      )}
     </>
   );
 }

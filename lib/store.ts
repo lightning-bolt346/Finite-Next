@@ -154,6 +154,26 @@ interface AppState {
   activeFocusSessionId: string | null;
   setActiveFocusSessionId: (id: string | null) => void;
 
+  activeFocusSessionConfig: {
+    durationMinutes: number;
+    breakMinutes: number;
+    numBreaks: number;
+    type: string;
+    intention: string;
+    linkedName: string | null;
+  } | null;
+  setActiveFocusSessionConfig: (config: {
+    durationMinutes: number;
+    breakMinutes: number;
+    numBreaks: number;
+    type: string;
+    intention: string;
+    linkedName: string | null;
+  } | null) => void;
+
+  showOutcome: boolean;
+  setShowOutcome: (v: boolean) => void;
+
   savedItems: SavedItem[];
   addSavedItem: (item: SavedItem) => void;
   updateSavedItem: (id: string, updates: Partial<SavedItem>) => void;
@@ -273,6 +293,12 @@ export const useStore = create<AppState>()(
       activeFocusSessionId: null,
       setActiveFocusSessionId: (id) => set({ activeFocusSessionId: id }),
 
+      activeFocusSessionConfig: null,
+      setActiveFocusSessionConfig: (config) => set({ activeFocusSessionConfig: config }),
+
+      showOutcome: false,
+      setShowOutcome: (v) => set({ showOutcome: v }),
+
       savedItems: [],
       addSavedItem: (item) => set((state) => ({ savedItems: [...state.savedItems, item] })),
       updateSavedItem: (id, updates) => set((state) => ({
@@ -292,8 +318,8 @@ export const useStore = create<AppState>()(
     {
       name: 'finite-storage', // local storage key
       partialize: (state) => {
-        // Exclude activeFocusSessionId from persisting so page reloads don't trap users
-        const { activeFocusSessionId, ...rest } = state;
+        // Exclude activeFocusSessionId, activeFocusSessionConfig, and showOutcome from persisting so page reloads don't trap users
+        const { activeFocusSessionId, activeFocusSessionConfig, showOutcome, ...rest } = state;
         return rest;
       },
     }

@@ -232,7 +232,9 @@ export default function DashboardTab() {
           <h1 className="text-h1 font-bold text-text-primary">
             Good {greeting}, {userName || 'friend'}.
           </h1>
-          <p className="text-text-secondary mt-2">Here&apos;s your timeline.</p>
+          <p className="text-text-secondary mt-2">
+            Here&apos;s your timeline for today, <span className="font-semibold text-accent">{now.toLocaleDateString('en-US', { day: 'numeric', month: 'long' })}</span>.
+          </p>
         </div>
       </div>
 

@@ -75,7 +75,7 @@ export default function Navigation({
         {/* Right: Settings & Clock */}
         <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
           <span className="font-mono text-sm tracking-wider text-accent font-bold">
-            {time ? time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '--:--:--'}
+            {time ? time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
           </span>
           <div className="flex items-center gap-2">
             <button 

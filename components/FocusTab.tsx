@@ -6,8 +6,6 @@ import { useTasks } from '../lib/contexts/TaskContext';
 import { differenceInDays, format, subDays, parseISO, isSameDay } from 'date-fns';
 import { Flame, Trophy, Clock, CalendarDays, History, Trash2, ChevronDown, ChevronUp, FileText, Star } from 'lucide-react';
 import SessionSetup from './focus/SessionSetup';
-import TimerOverlay from './focus/TimerOverlay';
-import SessionOutcomeModal from './focus/SessionOutcomeModal';
 import FocusHeatmap from './focus/FocusHeatmap';
 import { saveFocusSessionToFirestore, deleteFocusSessionFromFirestore, deleteBrainDumpFromFirestore } from '../lib/firebaseSync';
 
@@ -19,28 +17,17 @@ export default function FocusTab() {
     brainDumps, 
     removeBrainDump, 
     goals,
-    setActiveFocusSessionId
+    activeFocusSessionId,
+    setActiveFocusSessionId,
+    activeFocusSessionConfig,
+    setActiveFocusSessionConfig,
   } = useStore();
   const { tasks } = useTasks();
-  
-  const [isSessionActive, setIsSessionActive] = useState(false);
-  const [showOutcome, setShowOutcome] = useState(false);
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   
   // Collapse controller for session notes section
   const [expandedSessionNotesId, setExpandedSessionNotesId] = useState<string | null>(null);
   // Deletion confirmation ID selector
   const [confirmDeleteSessionId, setConfirmDeleteSessionId] = useState<string | null>(null);
-
-  const [sessionConfig, setSessionConfig] = useState({
-    durationMinutes: 25,
-    type: 'Deep Work',
-    intention: '',
-    linkedTask: null as string | null,
-    linkedGoal: null as string | null,
-    breakMinutes: 5,
-    numBreaks: 1
-  });
 
   const handleStartSession = (
     durationMinutes: number, 
@@ -52,48 +39,19 @@ export default function FocusTab() {
     numBreaks: number
   ) => {
     const nextId = crypto.randomUUID();
-    setActiveSessionId(nextId);
+    const linkedTaskObj = linkedTask ? tasks.find(t => t.id === linkedTask) : null;
+    const linkedGoalObj = linkedGoal ? goals.find(g => g.id === linkedGoal) : null;
+    const linkedName = linkedTaskObj ? linkedTaskObj.title : (linkedGoalObj ? linkedGoalObj.title : null);
+    
     setActiveFocusSessionId(nextId);
-    setSessionConfig({ durationMinutes, type, intention, linkedTask, linkedGoal, breakMinutes, numBreaks });
-    setIsSessionActive(true);
-  };
-
-  const handleSessionComplete = () => {
-    setIsSessionActive(false);
-    setShowOutcome(true);
-  };
-
-  const handleSessionCancel = () => {
-    setIsSessionActive(false);
-    setActiveSessionId(null);
-    setActiveFocusSessionId(null);
-  };
-
-  const handleSaveOutcome = async (outcome: string, rating: number) => {
-    if (!activeSessionId) return;
-
-    const loggedSession = {
-      id: activeSessionId,
-      title: sessionConfig.type,
-      outcome,
-      rating,
-      durationMinutes: sessionConfig.durationMinutes,
-      date: format(new Date(), 'yyyy-MM-dd'),
-      createdAt: Date.now()
-    };
-
-    // 1. Double commit (Local Memory Zustand + Persistent Firestore Sync)
-    addFocusSession(loggedSession);
-
-    try {
-      await saveFocusSessionToFirestore(loggedSession);
-    } catch (err) {
-      console.warn('Network offline fallback cached: ', err);
-    }
-
-    setShowOutcome(false);
-    setActiveSessionId(null);
-    setActiveFocusSessionId(null);
+    setActiveFocusSessionConfig({
+      durationMinutes,
+      breakMinutes,
+      numBreaks,
+      type,
+      intention,
+      linkedName
+    });
   };
 
   const handleDeleteSession = async (sessionId: string) => {
@@ -143,30 +101,8 @@ export default function FocusTab() {
 
   const totalMins = focusSessions.reduce((acc, s) => acc + s.durationMinutes, 0);
 
-  const linkedTaskObj = sessionConfig.linkedTask ? tasks.find(t => t.id === sessionConfig.linkedTask) : null;
-  const linkedGoalObj = sessionConfig.linkedGoal ? goals.find(g => g.id === sessionConfig.linkedGoal) : null;
-  const linkedName = linkedTaskObj ? linkedTaskObj.title : (linkedGoalObj ? linkedGoalObj.title : null);
-
   return (
     <div className="pb-24">
-      {isSessionActive && activeSessionId && (
-        <TimerOverlay 
-          sessionId={activeSessionId}
-          durationMinutes={sessionConfig.durationMinutes}
-          breakMinutes={sessionConfig.breakMinutes}
-          numBreaks={sessionConfig.numBreaks}
-          sessionType={sessionConfig.type}
-          intention={sessionConfig.intention}
-          linkedName={linkedName}
-          onComplete={handleSessionComplete}
-          onCancel={handleSessionCancel}
-        />
-      )}
-
-      {showOutcome && (
-        <SessionOutcomeModal onSave={handleSaveOutcome} />
-      )}
-
       <div className="flex items-end justify-between mb-8 select-none">
         <div>
           <h1 className="text-h1 font-bold text-text-primary mb-2">Focus</h1>
