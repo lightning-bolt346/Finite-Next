@@ -1,6 +1,7 @@
 'use client';
 
 import { useStore, Goal } from '../lib/store';
+import { saveGoalToFirestore, deleteGoalFromFirestore } from '../lib/firebaseSync';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, CheckCircle2, Circle, Trash2, AlignLeft, Target, GitCommit, X } from 'lucide-react';
 import { useState } from 'react';
@@ -17,7 +18,7 @@ export default function GoalsTab() {
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newGoal.title) return;
-    addGoal({
+    const goalData: Goal = {
       id: crypto.randomUUID(),
       title: newGoal.title,
       category: newGoal.category,
@@ -26,7 +27,9 @@ export default function GoalsTab() {
       notes: (newGoal as any).methodology ? `Methodology: ${(newGoal as any).methodology}\n${newGoal.notes || ''}` : newGoal.notes || undefined,
       targetDate: newGoal.targetDate || undefined,
       createdAt: Date.now()
-    });
+    };
+    addGoal(goalData);
+    saveGoalToFirestore(goalData);
     setNewGoal({ title: '', category: 'short', targetDate: '', type: 'outcome', notes: '', ...( { methodology: 'OKR' } as any) });
     setShowAdd(false);
   };
@@ -86,7 +89,11 @@ export default function GoalsTab() {
             {sectionGoals.map(goal => (
               <div key={goal.id} className="group flex items-start gap-4 p-4 rounded-lg bg-surface-2 border border-border hover:bg-surface-3 shadow-1 transition-colors">
                 <button 
-                  onClick={() => updateGoal(goal.id, { status: goal.status === 'completed' ? 'active' : 'completed' })}
+                  onClick={() => {
+                    const newStatus = goal.status === 'completed' ? 'active' : 'completed';
+                    updateGoal(goal.id, { status: newStatus });
+                    saveGoalToFirestore({ ...goal, status: newStatus });
+                  }}
                   className={`mt-1 ${goal.status === 'completed' ? 'text-success' : 'text-text-muted hover:text-success'} transition-colors flex-shrink-0`}
                 >
                   {goal.status === 'completed' ? <CheckCircle2 size={20} /> : <Circle size={20} />}
@@ -111,7 +118,10 @@ export default function GoalsTab() {
                   )}
                 </div>
                 <button 
-                  onClick={() => deleteGoal(goal.id)}
+                  onClick={() => {
+                    deleteGoal(goal.id);
+                    deleteGoalFromFirestore(goal.id);
+                  }}
                   className="opacity-0 group-hover:opacity-100 p-2 text-text-muted hover:text-danger hover:bg-surface-3 transition-all rounded-sm flex-shrink-0"
                 >
                   <Trash2 size={16} />

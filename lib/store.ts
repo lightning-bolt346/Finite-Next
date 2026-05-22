@@ -180,6 +180,7 @@ interface AppState {
   deleteSavedItem: (id: string) => void;
 
   clearAll: () => void;
+  hydrateFromFirestore: (data: any) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -313,6 +314,70 @@ export const useStore = create<AppState>()(
         weekendWants: [], focusSessions: [], savedItems: [], brainDumps: [],
         setupComplete: false, userName: '', birthDate: '1995-01-01',
         pinnedWidgets: [], todayGoals: {}
+      }),
+
+      hydrateFromFirestore: (data) => set((state) => {
+        if (!data) return {};
+
+        const getTimestamp = (item: any) => {
+          if (item.createdAt) return item.createdAt;
+          if (item.updatedAt) return item.updatedAt;
+          if (item.savedAt) {
+            try { return new Date(item.savedAt).getTime(); } catch (e) {}
+          }
+          return 0;
+        };
+
+        const mergeList = (local: any[], remote: any[]) => {
+          const map = new Map<string, any>();
+          for (const item of (local || [])) {
+            if (item && item.id) map.set(item.id, item);
+          }
+          for (const item of (remote || [])) {
+            if (item && item.id) {
+              const existing = map.get(item.id);
+              if (!existing) {
+                map.set(item.id, item);
+              } else {
+                const localTime = getTimestamp(existing);
+                const remoteTime = getTimestamp(item);
+                if (remoteTime > localTime) {
+                  map.set(item.id, item);
+                }
+              }
+            }
+          }
+          return Array.from(map.values());
+        };
+
+        const mergedTodayGoals = { ...state.todayGoals };
+        if (Array.isArray(data.todayGoals)) {
+          for (const remoteGoal of data.todayGoals) {
+            const dateKey = remoteGoal.date;
+            if (dateKey) {
+              const existing = mergedTodayGoals[dateKey];
+              if (!existing) {
+                mergedTodayGoals[dateKey] = remoteGoal;
+              } else {
+                const existingTime = existing.createdAt || 0;
+                const remoteTime = remoteGoal.createdAt || 0;
+                if (remoteTime > existingTime) {
+                  mergedTodayGoals[dateKey] = remoteGoal;
+                }
+              }
+            }
+          }
+        }
+
+        return {
+          focusSessions: mergeList(state.focusSessions, data.focusSessions),
+          brainDumps: mergeList(state.brainDumps, data.brainDumps),
+          goals: mergeList(state.goals, data.goals),
+          reflections: mergeList(state.reflections, data.reflections),
+          weekendWants: mergeList(state.weekendWants, data.weekendWants),
+          savedItems: mergeList(state.savedItems, data.savedItems),
+          todayGoals: mergedTodayGoals,
+        };
       }),
     }),
     {

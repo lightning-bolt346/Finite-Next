@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useStore } from '../../lib/store';
+import { saveWeekendWantToFirestore, deleteWeekendWantFromFirestore } from '../../lib/firebaseSync';
 import { Plus, X, History, Sparkles, Check, Trash2, Calendar, Clock, Smile, Heart, MessageCircle } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 
@@ -30,14 +31,17 @@ export default function WeekendWants() {
       return;
     }
 
-    addWeekendWant({
+    const wantData = {
       id: crypto.randomUUID(),
       text: newWantText.trim(),
-      status: 'open',
+      status: 'open' as const,
       createdAt: Date.now(),
       date: newWantDate || undefined,
       time: newWantTime || undefined,
-    });
+    };
+
+    addWeekendWant(wantData);
+    saveWeekendWantToFirestore(wantData);
 
     setNewWantText("");
     setNewWantDate("");
@@ -51,7 +55,12 @@ export default function WeekendWants() {
       setEnjoyText('');
       setFeelText('');
     } else {
-      updateWeekendWant(id, { status: 'missed', closedAt: Date.now() });
+      const existingWant = weekendWants.find(w => w.id === id);
+      if (existingWant) {
+        const updated = { ...existingWant, status: 'missed' as const, closedAt: Date.now() };
+        updateWeekendWant(id, { status: 'missed', closedAt: Date.now() });
+        saveWeekendWantToFirestore(updated);
+      }
     }
   };
 
@@ -59,12 +68,23 @@ export default function WeekendWants() {
     e.preventDefault();
     if (!reflectingWantId) return;
 
-    updateWeekendWant(reflectingWantId, {
-      status: 'done',
-      closedAt: Date.now(),
-      enjoy: enjoyText.trim() || undefined,
-      feel: feelText.trim() || undefined,
-    });
+    const existingWant = weekendWants.find(w => w.id === reflectingWantId);
+    if (existingWant) {
+      const updated = {
+        ...existingWant,
+        status: 'done' as const,
+        closedAt: Date.now(),
+        enjoy: enjoyText.trim() || undefined,
+        feel: feelText.trim() || undefined,
+      };
+      updateWeekendWant(reflectingWantId, {
+        status: 'done',
+        closedAt: Date.now(),
+        enjoy: enjoyText.trim() || undefined,
+        feel: feelText.trim() || undefined,
+      });
+      saveWeekendWantToFirestore(updated);
+    }
 
     setReflectingWantId(null);
   };
@@ -134,7 +154,10 @@ export default function WeekendWants() {
                  </button>
                  {/* Delete button */}
                  <button 
-                    onClick={() => removeWeekendWant(want.id)}
+                    onClick={() => (() => {
+                       removeWeekendWant(want.id);
+                       deleteWeekendWantFromFirestore(want.id);
+                     })()}
                     className="p-1 rounded-full text-text-muted hover:text-danger hover:bg-surface-3 transition-colors cursor-pointer"
                     title="Remove item"
                  >

@@ -21,7 +21,7 @@ export default function TodayTab() {
           <div className="flex items-baseline gap-3 mb-1">
             <h1 className="text-h1 font-bold text-text-primary">Today</h1>
             <span className="text-sm font-semibold text-accent/80 font-mono tracking-wider">
-              · {new Date().toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })}
+              · {new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short' })}
             </span>
           </div>
           <p className="text-text-secondary text-sm md:w-[60%]">

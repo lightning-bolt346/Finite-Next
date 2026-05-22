@@ -15,7 +15,9 @@ import LandingPage from '../components/LandingPage';
 import { useStore } from '../lib/store';
 import TimerOverlay from '../components/focus/TimerOverlay';
 import SessionOutcomeModal from '../components/focus/SessionOutcomeModal';
-import { saveFocusSessionToFirestore } from '../lib/firebaseSync';
+import { saveFocusSessionToFirestore, loadUserDataFromFirestore } from '../lib/firebaseSync';
+import { auth } from '../lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 import { format } from 'date-fns';
 
 import Navigation from '../components/Navigation';
@@ -32,6 +34,8 @@ export default function AppMain() {
     setActiveFocusSessionConfig,
     setShowOutcome,
     addFocusSession,
+    setUserId,
+    hydrateFromFirestore,
   } = useStore();
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -39,6 +43,25 @@ export default function AppMain() {
   
   const [mounted, setMounted] = useState(false);
   const [time, setTime] = useState<Date | null>(null);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (usr) => {
+      if (usr) {
+        setUserId(usr.uid);
+        try {
+          const remoteData = await loadUserDataFromFirestore(usr.uid);
+          if (remoteData) {
+            hydrateFromFirestore(remoteData);
+          }
+        } catch (error) {
+          console.warn("Failed to load user data from Firestore on login", error);
+        }
+      } else {
+        setUserId(null);
+      }
+    });
+    return unsub;
+  }, [setUserId, hydrateFromFirestore]);
 
   const handleSessionComplete = () => {
     setShowOutcome(true);

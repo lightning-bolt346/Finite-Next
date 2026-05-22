@@ -1,6 +1,7 @@
 'use client';
 
 import { useStore } from '../lib/store';
+import { saveTodayGoalToFirestore } from '../lib/firebaseSync';
 import { motion, AnimatePresence } from 'motion/react';
 import { Quote, Clock, Target, Plus, X, Pin } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
@@ -148,7 +149,7 @@ export default function DashboardTab() {
         </div>
       </div>
       <div className="text-display font-mono text-text-primary">
-        {now.toLocaleTimeString([], { hour12: false })}
+        {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
       </div>
       <div className="text-sm font-mono text-text-muted mt-1">
         {now.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
@@ -232,8 +233,8 @@ export default function DashboardTab() {
           <h1 className="text-h1 font-bold text-text-primary">
             Good {greeting}, {userName || 'friend'}.
           </h1>
-          <p className="text-text-secondary mt-2">
-            Here&apos;s your timeline for today, <span className="font-semibold text-accent">{now.toLocaleDateString('en-US', { day: 'numeric', month: 'long' })}</span>.
+          <p className="text-text-secondary mt-2 text-sm flex items-center gap-1.5 font-medium">
+            Here is your today&apos;s timeline, <span className="font-semibold text-accent underline underline-offset-4 decoration-accent/40">{now.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>.
           </p>
         </div>
       </div>
@@ -285,7 +286,13 @@ export default function DashboardTab() {
             <div className="flex gap-3 w-full sm:w-auto">
               {todayGoal && (
                 <button 
-                  onClick={() => setTodayGoal(todayDate, { completed: !todayGoal.completed })}
+                  onClick={() => {
+                    if (todayGoal) {
+                      const nextCompleted = !todayGoal.completed;
+                      setTodayGoal(todayDate, { completed: nextCompleted });
+                      saveTodayGoalToFirestore({ ...todayGoal, completed: nextCompleted });
+                    }
+                  }}
                   className={`flex-1 sm:flex-none px-6 py-3 rounded-lg font-semibold text-sm transition-all shadow-1 ${
                     todayGoal.completed 
                     ? 'bg-surface-3 text-text-secondary' 
@@ -318,13 +325,25 @@ export default function DashboardTab() {
                     </div>
                     <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
                       <button 
-                        onClick={() => rollTodayGoal(goal.date, todayDate)}
+                        onClick={() => {
+                          rollTodayGoal(goal.date, todayDate);
+                          saveTodayGoalToFirestore({ ...goal, rolledToDate: todayDate });
+                          setTimeout(() => {
+                            const newGoal = useStore.getState().todayGoals[todayDate];
+                            if (newGoal) {
+                              saveTodayGoalToFirestore(newGoal);
+                            }
+                          }, 50);
+                        }}
                         className="flex-1 sm:flex-none px-4 py-2 bg-accent-soft text-accent hover:bg-accent/30 rounded-md text-sm font-medium transition-colors"
                       >
                         Keep
                       </button>
                       <button 
-                        onClick={() => archiveTodayGoal(goal.date)}
+                        onClick={() => {
+                          archiveTodayGoal(goal.date);
+                          saveTodayGoalToFirestore({ ...goal, archived: true });
+                        }}
                         className="flex-1 sm:flex-none px-4 py-2 bg-surface-2 hover:bg-surface-3 text-text-secondary hover:text-text-primary rounded-md text-sm font-medium transition-colors"
                       >
                         Archive

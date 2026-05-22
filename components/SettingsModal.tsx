@@ -8,7 +8,7 @@ import { auth } from '../lib/firebase';
 import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, User, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 
 export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
-  const { userName, setUserName, birthDate, setBirthDate, clearAll, setUserId, theme, setTheme } = useStore();
+  const { userName, setUserName, birthDate, setBirthDate, clearAll, setUserId, theme, setTheme, setSetupComplete } = useStore();
   const [user, setUser] = useState<User | null>(null);
   
   const [email, setEmail] = useState('');
@@ -27,10 +27,9 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (usr) => {
       setUser(usr);
-      setUserId(usr ? usr.uid : null);
     });
     return unsub;
-  }, [setUserId]);
+  }, []);
 
   const handleGoogleLogin = async () => {
     try {
@@ -55,6 +54,8 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
       } else {
         await createUserWithEmailAndPassword(auth, email, password);
       }
+      setEmail('');
+      setPassword('');
     } catch (error: any) {
       console.error(error);
       alert(error.message);
@@ -65,15 +66,23 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
 
   const handleLogout = async () => {
     try {
+      if (confirm('Also clear local data?')) {
+        clearAll();
+      }
       await signOut(auth);
+      setSetupComplete(false);
     } catch (error) {
       console.error(error);
     }
   };
 
-  const handleReset = () => {
+  const handleReset = async () => {
     if (confirm('Are you sure? This will clear all data from this browser.')) {
       clearAll();
+      try {
+        await signOut(auth);
+      } catch (err) {}
+      setSetupComplete(false);
       onClose();
     }
   };

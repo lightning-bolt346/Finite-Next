@@ -1,7 +1,7 @@
 'use client';
 
-import { doc, setDoc, deleteDoc, collection, getDocs, writeBatch } from 'firebase/firestore';
-import { db, auth } from './firebase';
+import { doc, setDoc, deleteDoc, collection, getDocs } from 'firebase/firestore';
+import { db, auth, firebaseReady } from './firebase';
 
 export enum OperationType {
   CREATE = 'create',
@@ -36,8 +36,7 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
     operationType,
     path,
   };
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+  console.warn('Firestore Warning (Silenced): ', JSON.stringify(errInfo));
 }
 
 export async function saveFocusSessionToFirestore(session: {
@@ -49,6 +48,7 @@ export async function saveFocusSessionToFirestore(session: {
   outcome?: string;
   rating?: number;
 }) {
+  if (!firebaseReady) return;
   const user = auth.currentUser;
   if (!user) return; // Silent fallback for Guest/Offline mode
 
@@ -72,6 +72,7 @@ export async function saveBrainDumpToFirestore(
     createdAt: number;
   }
 ) {
+  if (!firebaseReady) return;
   const user = auth.currentUser;
   if (!user) return; // Silent fallback
 
@@ -90,13 +91,12 @@ export async function saveBrainDumpToFirestore(
 }
 
 export async function deleteFocusSessionFromFirestore(sessionId: string) {
+  if (!firebaseReady) return;
   const user = auth.currentUser;
   if (!user) return;
 
   const sessionPath = `users/${user.uid}/focusSessions/${sessionId}`;
   try {
-    // We only delete the focus session document itself.
-    // Independent brain dumps should persist globally and not be cascaded.
     await deleteDoc(doc(db, 'users', user.uid, 'focusSessions', sessionId));
   } catch (error) {
     handleFirestoreError(error, OperationType.DELETE, sessionPath);
@@ -104,6 +104,7 @@ export async function deleteFocusSessionFromFirestore(sessionId: string) {
 }
 
 export async function deleteBrainDumpFromFirestore(sessionId: string, dumpId: string) {
+  if (!firebaseReady) return;
   const user = auth.currentUser;
   if (!user) return;
 
@@ -112,5 +113,214 @@ export async function deleteBrainDumpFromFirestore(sessionId: string, dumpId: st
     await deleteDoc(doc(db, 'users', user.uid, 'brainDumps', dumpId));
   } catch (error) {
     handleFirestoreError(error, OperationType.DELETE, path);
+  }
+}
+
+// ----------------------------------------------------
+// New Sync Functions for Additional Data Types
+// ----------------------------------------------------
+
+export async function saveGoalToFirestore(goal: {
+  id: string;
+  title: string;
+  category: 'short' | 'medium' | 'long';
+  status: 'active' | 'completed';
+  type?: 'outcome' | 'process';
+  notes?: string;
+  targetDate?: string;
+  createdAt: number;
+}) {
+  if (!firebaseReady) return;
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const path = `users/${user.uid}/goals/${goal.id}`;
+  try {
+    await setDoc(doc(db, 'users', user.uid, 'goals', goal.id), {
+      ...goal,
+      userId: user.uid
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+}
+
+export async function deleteGoalFromFirestore(goalId: string) {
+  if (!firebaseReady) return;
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const path = `users/${user.uid}/goals/${goalId}`;
+  try {
+    await deleteDoc(doc(db, 'users', user.uid, 'goals', goalId));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, path);
+  }
+}
+
+export async function saveReflectionToFirestore(reflection: {
+  id: string;
+  text: string;
+  date: string;
+  createdAt: number;
+}) {
+  if (!firebaseReady) return;
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const path = `users/${user.uid}/reflections/${reflection.id}`;
+  try {
+    await setDoc(doc(db, 'users', user.uid, 'reflections', reflection.id), {
+      ...reflection,
+      userId: user.uid
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+}
+
+export async function saveWeekendWantToFirestore(want: {
+  id: string;
+  text: string;
+  status: 'open' | 'done' | 'missed';
+  createdAt: number;
+  date?: string;
+  time?: string;
+  closedAt?: number;
+  enjoy?: string;
+  feel?: string;
+}) {
+  if (!firebaseReady) return;
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const path = `users/${user.uid}/weekendWants/${want.id}`;
+  try {
+    await setDoc(doc(db, 'users', user.uid, 'weekendWants', want.id), {
+      ...want,
+      userId: user.uid
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+}
+
+export async function deleteWeekendWantFromFirestore(wantId: string) {
+  if (!firebaseReady) return;
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const path = `users/${user.uid}/weekendWants/${wantId}`;
+  try {
+    await deleteDoc(doc(db, 'users', user.uid, 'weekendWants', wantId));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, path);
+  }
+}
+
+export async function saveSavedItemToFirestore(item: {
+  id: string;
+  title: string;
+  category: string;
+  status: 'inbox' | 'current' | 'done';
+  savedAt: string;
+  url?: string;
+  type?: string;
+  tags?: string[];
+  notes?: string;
+}) {
+  if (!firebaseReady) return;
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const path = `users/${user.uid}/savedItems/${item.id}`;
+  try {
+    await setDoc(doc(db, 'users', user.uid, 'savedItems', item.id), {
+      ...item,
+      userId: user.uid
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+}
+
+export async function deleteSavedItemFromFirestore(itemId: string) {
+  if (!firebaseReady) return;
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const path = `users/${user.uid}/savedItems/${itemId}`;
+  try {
+    await deleteDoc(doc(db, 'users', user.uid, 'savedItems', itemId));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, path);
+  }
+}
+
+export async function saveTodayGoalToFirestore(goal: {
+  id: string;
+  title: string;
+  doneText: string;
+  priority: 'Normal' | 'High' | 'Critical';
+  minutes: number;
+  completed: boolean;
+  date: string;
+  archived?: boolean;
+  rolledFromDate?: string;
+  rolledToDate?: string;
+  createdAt: number;
+}) {
+  if (!firebaseReady) return;
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const path = `users/${user.uid}/todayGoals/${goal.id}`;
+  try {
+    await setDoc(doc(db, 'users', user.uid, 'todayGoals', goal.id), {
+      ...goal,
+      userId: user.uid
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+}
+
+// ----------------------------------------------------
+// Core Initialization & Load Helper
+// ----------------------------------------------------
+
+export async function loadUserDataFromFirestore(uid: string) {
+  if (!firebaseReady) return null;
+  try {
+    const [
+      focusSessionsSnap,
+      brainDumpsSnap,
+      goalsSnap,
+      reflectionsSnap,
+      weekendWantsSnap,
+      savedItemsSnap,
+      todayGoalsSnap,
+    ] = await Promise.all([
+      getDocs(collection(db, 'users', uid, 'focusSessions')),
+      getDocs(collection(db, 'users', uid, 'brainDumps')),
+      getDocs(collection(db, 'users', uid, 'goals')),
+      getDocs(collection(db, 'users', uid, 'reflections')),
+      getDocs(collection(db, 'users', uid, 'weekendWants')),
+      getDocs(collection(db, 'users', uid, 'savedItems')),
+      getDocs(collection(db, 'users', uid, 'todayGoals')),
+    ]);
+
+    return {
+      focusSessions: focusSessionsSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+      brainDumps: brainDumpsSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+      goals: goalsSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+      reflections: reflectionsSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+      weekendWants: weekendWantsSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+      savedItems: savedItemsSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+      todayGoals: todayGoalsSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+    };
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, `users/${uid}/*`);
+    return null;
   }
 }

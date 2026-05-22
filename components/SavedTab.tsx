@@ -1,6 +1,7 @@
 'use client';
 
 import { useStore, SavedItemCategory, SavedItem } from '../lib/store';
+import { saveSavedItemToFirestore, deleteSavedItemFromFirestore } from '../lib/firebaseSync';
 import { motion } from 'motion/react';
 import { Inbox, LayoutGrid, CheckCircle2, Circle, ArrowRight, Trash2, Library, BookOpen } from 'lucide-react';
 import { useState } from 'react';
@@ -27,17 +28,19 @@ export default function SavedTab() {
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
-    addSavedItem({
+    const itemData: SavedItem = {
       id: crypto.randomUUID(),
       title: newTitle.trim(),
       category: newCat,
       status: 'inbox',
       savedAt: new Date().toISOString(),
-      url: newUrl,
-      type: newType,
+      url: newUrl || undefined,
+      type: newType || undefined,
       tags: newTags.split(',').map(t => t.trim()).filter(Boolean),
-      notes: newNotes
-    });
+      notes: newNotes || undefined
+    };
+    addSavedItem(itemData);
+    saveSavedItemToFirestore(itemData);
     setNewTitle("");
     setNewUrl("");
     setNewTags("");
@@ -72,6 +75,7 @@ export default function SavedTab() {
       }
     }
     updateSavedItem(id, { status: newStatus });
+    saveSavedItemToFirestore({ ...item, status: newStatus });
   };
 
   // Stats
@@ -262,7 +266,7 @@ export default function SavedTab() {
                           <button onClick={() => moveItem(item.id, 'current')} className="p-1.5 bg-accent-soft text-accent hover:bg-accent-soft/80 rounded-sm text-xs font-bold flex items-center gap-1 transition-colors">
                             Start <ArrowRight size={12} />
                           </button>
-                          <button onClick={() => deleteSavedItem(item.id)} className="p-1.5 text-text-secondary hover:text-danger rounded-sm transition-colors">
+                          <button onClick={() => { deleteSavedItem(item.id); deleteSavedItemFromFirestore(item.id); }} className="p-1.5 text-text-secondary hover:text-danger rounded-sm transition-colors">
                             <Trash2 size={14} />
                           </button>
                         </div>
@@ -288,7 +292,7 @@ export default function SavedTab() {
                           <span className="text-micro font-bold text-text-muted uppercase tracking-wider w-20 truncate">{item.category}</span>
                           <span className="text-sm font-medium text-text-secondary line-through truncate max-w-[200px] sm:max-w-[250px]">{item.title}</span>
                         </div>
-                        <button onClick={() => deleteSavedItem(item.id)} className="opacity-0 group-hover:opacity-100 p-1.5 text-text-secondary hover:text-danger rounded-sm transition-colors">
+                        <button onClick={() => { deleteSavedItem(item.id); deleteSavedItemFromFirestore(item.id); }} className="opacity-0 group-hover:opacity-100 p-1.5 text-text-secondary hover:text-danger rounded-sm transition-colors">
                           <Trash2 size={14} />
                         </button>
                       </div>

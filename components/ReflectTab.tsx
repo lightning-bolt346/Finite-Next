@@ -1,6 +1,7 @@
 'use client';
 
 import { useStore } from '../lib/store';
+import { saveReflectionToFirestore } from '../lib/firebaseSync';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 import { differenceInDays, format } from 'date-fns';
@@ -33,12 +34,14 @@ export default function ReflectTab() {
 
   const handleSave = () => {
     if (!text.trim()) return;
-    addReflection({
+    const reflectionData = {
       id: crypto.randomUUID(),
       text,
       date: todayDate,
       createdAt: Date.now()
-    });
+    };
+    addReflection(reflectionData);
+    saveReflectionToFirestore(reflectionData);
     setText('');
   };
 

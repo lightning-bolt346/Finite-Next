@@ -55,6 +55,8 @@ export default function LandingPage({ onComplete }: { onComplete: () => void }) 
       } else {
         await createUserWithEmailAndPassword(auth, email, password);
       }
+      setEmail('');
+      setPassword('');
       handleSkip(); // Finish setup
     } catch (error: any) {
       console.error(error);
