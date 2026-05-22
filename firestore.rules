@@ -30,6 +30,18 @@ service cloud.firestore {
         && (
           incoming().diff(existing()).affectedKeys().hasOnly(['birthDate', 'updatedAt'])
         );
+
+      match /focusSessions/{sessionId} {
+        allow read, write: if isSignedIn() && request.auth.uid == userId;
+
+        match /brainDumps/{dumpId} {
+          allow read, write: if isSignedIn() && request.auth.uid == userId;
+        }
+      }
+
+      match /brainDumps/{dumpId} {
+        allow read, write: if isSignedIn() && request.auth.uid == userId;
+      }
     }
 
     // Goals

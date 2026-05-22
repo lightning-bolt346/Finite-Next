@@ -69,34 +69,14 @@ export default function WeekendWants() {
     setReflectingWantId(null);
   };
 
-  const suggestions = [
-     "Bake sourdough bread 🥖",
-     "Walk in the botanical garden 🌅",
-     "Browse a local bookstore 📚",
-  ];
-
-  const selectSuggestion = (sug: string) => {
-     setNewWantText(sug);
-     setIsAdding(true);
-  };
-
   return (
-    <div className="p-6 bg-gradient-to-br from-surface-1 via-surface-1 to-warning-soft/10 border border-border hover:border-warning/30 rounded-2xl relative overflow-hidden flex flex-col gap-4 shadow-1 transition-all group select-none">
+    <div className="p-6 bg-surface-1 border border-border rounded-xl flex flex-col gap-4 select-none">
       
-      {/* Background Soft Glow Decor */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-warning-soft/30 to-transparent blur-2xl rounded-full pointer-events-none" />
-
       {/* Header Container */}
-      <div className="flex items-start justify-between z-10 relative">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-             <h2 className="text-base font-bold text-text-primary tracking-tight">Weekend Wants</h2>
-             <span className="text-xs">🍹</span>
-          </div>
-          <p className="text-xs text-text-secondary leading-tight">Casual planning/leisure list.</p>
-        </div>
+      <div className="flex items-center justify-between z-10 relative">
+        <h2 className="text-base font-medium text-text-primary tracking-tight">Weekend</h2>
         
-        <div className="flex items-center gap-1.5 flex-shrink-0">
+        <div className="flex items-center gap-3 flex-shrink-0">
           {/* History Button */}
           <button 
              onClick={() => setShowHistory(true)}
@@ -106,9 +86,9 @@ export default function WeekendWants() {
              <History size={14} />
           </button>
           
-          {/* Mono Live Count */}
-          <span className="bg-warning-soft/40 border border-warning/10 text-warning px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono shadow-xs">
-             {activeWants.length}/5
+          {/* Mono Live Count Badge */}
+          <span className="text-xs text-text-muted">
+             {activeWants.length} / 5
           </span>
         </div>
       </div>
@@ -122,49 +102,43 @@ export default function WeekendWants() {
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="group/item bg-surface-2/65 hover:bg-surface-2 border border-border/80 hover:border-warning/20 p-3.5 rounded-xl flex items-center justify-between transition-all shadow-xs"
+              className="group/item bg-surface-2/40 hover:bg-surface-2/80 border border-border p-3.5 rounded-xl flex items-center justify-between transition-all"
             >
               <div className="min-w-0 pr-4">
-                 <span className="text-sm font-medium text-text-primary leading-tight block truncate group-hover/item:text-warning transition-colors">{want.text}</span>
+                 <span className="text-sm font-medium text-text-primary leading-tight block truncate">{want.text}</span>
                  {(want.date || want.time) && (
                     <div className="flex items-center gap-2 mt-1 text-[10px] text-text-muted font-mono">
                       {want.date && (
                          <span className="flex items-center gap-1">
-                            <Calendar size={10} className="text-warning-muted" /> {want.date}
+                            <Calendar size={10} className="text-text-muted" /> {want.date}
                          </span>
                       )}
                       {want.time && (
                          <span className="flex items-center gap-1">
-                            <Clock size={10} className="text-warning-muted" /> {want.time}
+                            <Clock size={10} className="text-text-muted" /> {want.time}
                          </span>
                       )}
                     </div>
                  )}
               </div>
 
-              {/* Action options */}
-              <div className="flex items-center gap-1.5 flex-shrink-0">
-                 {/* Done pill */}
+              {/* Action options - visible on hover of group/item only */}
+              <div className="flex items-center gap-2 flex-shrink-0 opacity-0 group-hover/item:opacity-100 transition-opacity duration-fast">
+                 {/* Done button */}
                  <button 
                     onClick={() => handleWantAction(want.id, 'done')}
-                    className="px-2.5 py-1 text-[10px] font-extrabold rounded-full bg-success-soft text-success border border-success/15 hover:bg-success/20 transition-all cursor-pointer hover:scale-105 active:scale-95"
+                    className="p-1 rounded-full text-text-muted hover:text-success hover:bg-surface-3 transition-colors cursor-pointer"
+                    title="Mark as done"
                  >
-                    Done
+                    <Check size={14} />
                  </button>
-                 {/* Missed pill */}
-                 <button 
-                    onClick={() => handleWantAction(want.id, 'missed')}
-                    className="px-2.5 py-1 text-[10px] font-extrabold rounded-full bg-danger-soft/40 text-danger border border-danger/15 hover:bg-danger/20 transition-all cursor-pointer hover:scale-105 active:scale-95"
-                 >
-                    Miss
-                 </button>
-                 {/* Delete mini cross */}
+                 {/* Delete button */}
                  <button 
                     onClick={() => removeWeekendWant(want.id)}
                     className="p-1 rounded-full text-text-muted hover:text-danger hover:bg-surface-3 transition-colors cursor-pointer"
                     title="Remove item"
                  >
-                    <Trash2 size={12} />
+                    <Trash2 size={14} />
                  </button>
               </div>
             </motion.div>
@@ -172,23 +146,11 @@ export default function WeekendWants() {
         </AnimatePresence>
 
         {activeWants.length === 0 && (
-           <div className="py-6 px-4 text-center rounded-2xl border border-dashed border-border/70 bg-surface-1/50 flex flex-col items-center justify-center">
-              <Sparkles size={16} className="text-warning-muted/70 mb-2 animate-pulse" />
-              <p className="text-xs text-text-secondary leading-normal mb-3 max-w-[200px]">
-                 Nothing planned yet. What cozy things would you like to explore?
+           <div className="py-12 px-4 text-center rounded-xl border border-dashed border-border bg-surface-1/50 flex flex-col items-center justify-center gap-2">
+              <Calendar size={20} className="text-text-muted" />
+              <p className="text-xs text-text-muted">
+                 Nothing planned yet.
               </p>
-              
-              <div className="flex flex-col gap-1.5 w-full">
-                 {suggestions.map((sug, idx) => (
-                    <button 
-                       key={idx}
-                       onClick={() => selectSuggestion(sug)}
-                       className="py-1.5 px-3 rounded-lg bg-surface-1 border border-border/70 hover:border-warning/30 hover:bg-surface-2 transition-all text-left text-[11px] text-text-primary block truncate cursor-pointer hover:scale-[1.01]"
-                    >
-                       💡 {sug}
-                    </button>
-                 ))}
-              </div>
            </div>
         )}
       </div>
@@ -202,17 +164,16 @@ export default function WeekendWants() {
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
                 onSubmit={handleAddWant} 
-                className="space-y-3 bg-surface-2/65 p-4 rounded-xl border border-border/90"
+                className="space-y-3 bg-surface-2 p-4 rounded-xl border border-border"
              >
                 <div className="space-y-1">
-                   <label className="text-[10px] text-text-muted font-bold uppercase tracking-wider block">Cozy Idea</label>
                    <input 
                       type="text"
                       required
                       value={newWantText}
                       onChange={e => setNewWantText(e.target.value)}
-                      placeholder="e.g. Visit farmers market..."
-                      className="w-full bg-surface-1 border border-border rounded-lg px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-warning/80 transition-all font-medium"
+                      placeholder="What do you want to do this weekend?"
+                      className="w-full bg-surface-1 border border-border rounded-lg px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-accent transition-all font-medium"
                    />
                 </div>
 
@@ -223,7 +184,7 @@ export default function WeekendWants() {
                          type="date"
                          value={newWantDate}
                          onChange={e => setNewWantDate(e.target.value)}
-                         className="w-full bg-surface-1 border border-border rounded-lg px-2.5 py-1.5 text-xs text-text-primary focus:outline-none focus:border-warning/80 transition-all cursor-pointer font-medium"
+                         className="w-full bg-surface-1 border border-border rounded-lg px-2.5 py-1.5 text-xs text-text-primary focus:outline-none focus:border-accent transition-all cursor-pointer font-medium"
                       />
                    </div>
                    <div className="space-y-1">
@@ -232,7 +193,7 @@ export default function WeekendWants() {
                          type="time"
                          value={newWantTime}
                          onChange={e => setNewWantTime(e.target.value)}
-                         className="w-full bg-surface-1 border border-border rounded-lg px-2.5 py-1.5 text-xs text-text-primary focus:outline-none focus:border-warning/80 transition-all cursor-pointer font-medium"
+                         className="w-full bg-surface-1 border border-border rounded-lg px-2.5 py-1.5 text-xs text-text-primary focus:outline-none focus:border-accent transition-all cursor-pointer font-medium"
                       />
                    </div>
                 </div>
@@ -250,7 +211,7 @@ export default function WeekendWants() {
                    </button>
                    <button 
                       type="submit"
-                      className="px-4 py-1.5 bg-warning text-surface-1 hover:bg-warning-hover text-xs font-extrabold rounded-lg transition-colors cursor-pointer shadow-xs shadow-warning/10"
+                      className="px-4 py-1.5 bg-accent text-bg hover:opacity-90 text-xs font-extrabold rounded-lg transition-colors cursor-pointer shadow-xs"
                    >
                       Save Want
                    </button>
@@ -260,9 +221,9 @@ export default function WeekendWants() {
              activeWants.length < 5 && (
                 <button 
                    onClick={() => setIsAdding(true)}
-                   className="w-full py-2.5 bg-surface-2/40 hover:bg-surface-2/70 hover:border-warning/20 border border-dashed border-border text-center rounded-xl flex items-center justify-center gap-1.5 text-text-secondary hover:text-warning text-xs font-bold transition-all cursor-pointer hover:scale-[1.005] active:scale-95"
+                   className="w-full py-2.5 bg-surface-2/40 hover:bg-surface-2/75 border border-dashed border-border text-center rounded-xl flex items-center justify-center gap-1.5 text-text-secondary hover:text-text-primary text-xs font-bold transition-all cursor-pointer hover:scale-[1.002] active:scale-95"
                 >
-                   <Plus size={14} /> Add Cozy Want
+                   <Plus size={14} /> Add Weekend Want
                 </button>
              )
           )}

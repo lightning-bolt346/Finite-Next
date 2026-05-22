@@ -128,6 +128,34 @@ export default function DashboardTab() {
     }
   ];
 
+  const renderNowCard = () => (
+    <div key="Now-card" className="p-5 bg-surface-1 border border-border rounded-lg relative flex flex-col gap-1 w-full md:min-w-[300px] md:max-w-[380px] flex-grow">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-h3 font-semibold text-text-primary">Now</h2>
+        <div className="flex items-center gap-2">
+          <span className="px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-widest bg-danger-soft text-danger border border-danger/20 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-danger animate-pulse" /> Live
+          </span>
+          <button 
+            type="button"
+            onClick={() => togglePinWidget('Now')}
+            className={`p-1.5 rounded-sm border transition-colors duration-fast ${
+              pinnedWidgets.includes('Now') ? 'bg-accent text-bg border-accent' : 'bg-surface-2 text-text-muted border-border hover:bg-surface-3 hover:text-text-primary'
+            }`}
+          >
+            <Pin size={12} className={pinnedWidgets.includes('Now') ? "fill-current" : ""} />
+          </button>
+        </div>
+      </div>
+      <div className="text-display font-mono text-text-primary">
+        {now.toLocaleTimeString([], { hour12: false })}
+      </div>
+      <div className="text-sm font-mono text-text-muted mt-1">
+        {now.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+      </div>
+    </div>
+  );
+
   const renderStatCard = (card: typeof statCards[0]) => (
     <div 
       key={card.id} 
@@ -167,16 +195,33 @@ export default function DashboardTab() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-      {pinnedWidgets.length > 0 && (
-        <div className="mb-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 border border-border rounded-full bg-surface-2 text-micro text-text-muted mb-4 uppercase tracking-wider font-semibold">
-            Pinned Metrics
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {statCards.filter(c => pinnedWidgets.includes(c.id)).map(renderStatCard)}
-          </div>
+      <div 
+        className="mb-10"
+        style={{ 
+          display: pinnedWidgets.length > 0 ? 'flex' : 'none', 
+          flexDirection: 'column',
+          gap: 'var(--space-3)'
+        }}
+      >
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 border border-border rounded-full bg-surface-2 text-micro text-text-muted mb-4 uppercase tracking-wider font-semibold self-start">
+          Pinned Metrics
         </div>
-      )}
+        <div 
+          style={{ 
+            display: 'flex', 
+            flexWrap: 'wrap', 
+            gap: 'var(--space-3)' 
+          }}
+          className="w-full"
+        >
+          {pinnedWidgets.includes('Now') && renderNowCard()}
+          {statCards.filter(c => pinnedWidgets.includes(c.id)).map(c => (
+            <div key={c.id} className="w-full md:min-w-[300px] md:max-w-[380px] flex-grow">
+              {renderStatCard(c)}
+            </div>
+          ))}
+        </div>
+      </div>
 
       <div className="flex items-end justify-between mb-8">
         <div>
@@ -343,31 +388,8 @@ export default function DashboardTab() {
           <PerspectiveCard />
           <TimelineCards />
 
-          {/* Current Moment Snippet */}
-          <div className="p-5 bg-surface-1 border border-border rounded-lg relative flex flex-col gap-1">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-h3 font-semibold text-text-primary">Now</h2>
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-widest bg-danger-soft text-danger border border-danger/20 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-danger animate-pulse" /> Live
-                </span>
-                <button 
-                  onClick={() => togglePinWidget('Now')}
-                  className={`p-1.5 rounded-sm border transition-colors duration-fast ${
-                    pinnedWidgets.includes('Now') ? 'bg-accent text-bg border-accent' : 'bg-surface-2 text-text-muted border-border hover:bg-surface-3 hover:text-text-primary'
-                  }`}
-                >
-                  <Pin size={12} className={pinnedWidgets.includes('Now') ? "fill-current" : ""} />
-                </button>
-              </div>
-            </div>
-            <div className="text-display font-mono text-text-primary">
-              {now.toLocaleTimeString([], { hour12: false })}
-            </div>
-            <div className="text-sm font-mono text-text-muted mt-1">
-              {now.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-            </div>
-          </div>
+          {/* Current Moment Snippet - Hide from sidebar if pinned */}
+          {!pinnedWidgets.includes('Now') && renderNowCard()}
 
           <div className="p-5 bg-surface-1 border border-border rounded-lg flex flex-col gap-2">
             <span className="text-micro font-bold text-text-secondary uppercase tracking-wider block mb-1">Today&apos;s Prompt</span>

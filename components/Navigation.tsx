@@ -31,11 +31,16 @@ export default function Navigation({
   time: Date | null
 }) {
   const [user, setUser] = useState<User | null>(null);
+  const activeFocusSessionId = useStore((state) => state.activeFocusSessionId);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, setUser);
     return unsub;
   }, []);
+
+  const handleTabClick = (tabId: Tab) => {
+    setActiveTab(tabId);
+  };
 
   return (
     <>
@@ -43,7 +48,7 @@ export default function Navigation({
       <header className="sticky top-0 z-50 h-[56px] flex items-center justify-between px-4 sm:px-8 border-b border-border bg-surface-1/80 backdrop-blur-[20px]">
         {/* Left: Wordmark */}
         <div className="font-[600] text-[18px] text-text-primary flex-shrink-0 flex items-center gap-2 cursor-pointer">
-          <div className="w-[24px] h-[24px] rounded-full bg-[radial-gradient(circle_at_32%_28%,#fff,var(--color-accent)_25%,var(--color-accent2,var(--color-surface-2))_72%)] shadow-[0_0_12px_var(--color-accent-soft)] relative after:content-[''] after:absolute after:inset-[5px] after:rounded-full after:bg-[var(--color-bg)] after:opacity-80" />
+          <div className="w-[24px] h-[24px] rounded-full bg-[radial-gradient(circle_at_32%_28%,#fff,var(--color-accent)_25%,var(--color-accent2,var(--color-surface-2))_72%)] shadow-[0_0_12px_var(--color-accent-soft)] relative after:content-[''] after:absolute after:inset-[5px] after:rounded-full after:bg-[var(--color-bg)] after:opacity-85" />
           Finite
         </div>
         
@@ -52,7 +57,7 @@ export default function Navigation({
           {TAB_META.map(t => (
             <button 
               key={t.id}
-              onClick={() => setActiveTab(t.id as Tab)}
+              onClick={() => handleTabClick(t.id as Tab)}
               className="relative h-full px-4 text-label transition-colors duration-medium ease-enter"
               style={{ color: activeTab === t.id ? 'var(--color-text-primary)' : 'var(--color-text-muted)' }}
             >
@@ -69,8 +74,8 @@ export default function Navigation({
 
         {/* Right: Settings & Clock */}
         <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-          <span className="font-mono text-xs tracking-widest text-text-muted hidden sm:block">
-            {time ? time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+          <span className="font-mono text-sm tracking-wider text-accent font-bold">
+            {time ? time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '--:--:--'}
           </span>
           <div className="flex items-center gap-2">
             <button 
@@ -101,7 +106,7 @@ export default function Navigation({
           return (
             <button 
               key={t.id}
-              onClick={() => setActiveTab(t.id as Tab)}
+              onClick={() => handleTabClick(t.id as Tab)}
               className="flex-1 flex flex-col items-center justify-center gap-1 min-h-[44px] active:scale-[0.92] transition-transform duration-medium ease-spring"
               style={{ color: isActive ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
             >

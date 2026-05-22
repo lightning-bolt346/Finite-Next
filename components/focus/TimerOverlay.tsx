@@ -1,13 +1,14 @@
 'use client';
 
-import { motion } from 'motion/react';
-import { useEffect, useState, useRef, useMemo } from 'react';
-import confetti from 'canvas-confetti';
-import { Minimize2, Maximize2, Edit3, Play, Pause, X, ChevronRight, Trash2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { useEffect, useState, useRef } from 'react';
+import { Minimize2, Maximize2, Edit3, Play, Pause, X, ChevronRight, Trash2, AlertCircle, Sun, Moon } from 'lucide-react';
 import { useStore } from '../../lib/store';
-import { audioEngine } from '../../lib/audioEngine';
+import { useFocusTimer } from '../../hooks/useFocusTimer';
+import { saveBrainDumpToFirestore, deleteBrainDumpFromFirestore } from '../../lib/firebaseSync';
 
 interface TimerOverlayProps {
+  sessionId: string;
   durationMinutes: number;
   breakMinutes: number;
   numBreaks: number;
@@ -18,14 +19,8 @@ interface TimerOverlayProps {
   onCancel: () => void;
 }
 
-interface TimerSegment {
-  type: 'focus' | 'break';
-  durationSeconds: number;
-  indexInType: number;
-  totalOfType: number;
-}
-
 export default function TimerOverlay({ 
+  sessionId,
   durationMinutes, 
   breakMinutes, 
   numBreaks, 
@@ -36,198 +31,202 @@ export default function TimerOverlay({
   onCancel 
 }: TimerOverlayProps) {
   
-  const { brainDumps, addBrainDump, removeBrainDump } = useStore();
+  const brainDumps = useStore((state) => state.brainDumps);
+  const addBrainDump = useStore((state) => state.addBrainDump);
+  const removeBrainDumpByState = useStore((state) => state.removeBrainDump);
+  const theme = useStore((state) => state.theme);
+  const isPlatformDark = theme !== 'light' && theme !== 'sepia' && theme !== 'lavender' && theme !== 'sage';
   
-  const [isPaused, setIsPaused] = useState(false);
+  const removeBrainDump = (id: string) => {
+    removeBrainDumpByState(id);
+  };
+  
   const [isMinimized, setIsMinimized] = useState(false);
-  
-  // Brain dump floating window state
   const [showBrainDump, setShowBrainDump] = useState(false);
   const [brainDumpText, setBrainDumpText] = useState('');
   
-  // Build the list of segments (Focus alternating with Break)
-  const segments = useMemo(() => {
-    const list: TimerSegment[] = [];
-    if (numBreaks === 0 || breakMinutes === 0) {
-      list.push({ 
-        type: 'focus', 
-        durationSeconds: durationMinutes * 60, 
-        indexInType: 1, 
-        totalOfType: 1 
-      });
-    } else {
-      const parts = numBreaks + 1;
-      const baseFocusSeconds = Math.floor((durationMinutes * 60) / parts);
-      
-      for (let i = 1; i <= parts; i++) {
-        list.push({
-          type: 'focus',
-          durationSeconds: baseFocusSeconds,
-          indexInType: i,
-          totalOfType: parts
-        });
-        
-        if (i < parts) {
-          list.push({
-            type: 'break',
-            durationSeconds: breakMinutes * 60,
-            indexInType: i,
-            totalOfType: numBreaks
-          });
-        }
-      }
-    }
-    return list;
-  }, [durationMinutes, breakMinutes, numBreaks]);
+  // Custom theme toggle inside the dark room: supports pure dark and elegant light mode
+  const [isDarkTheme, setIsDarkTheme] = useState(isPlatformDark);
 
-  const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
-  const [segmentElapsed, setSegmentElapsed] = useState(0);
-  
-  // Safety guard range checking
-  const currentSegment = useMemo(() => {
-    return segments[currentSegmentIndex] || segments[segments.length - 1];
-  }, [segments, currentSegmentIndex]);
+  const hasDraggedRef = useRef(false);
+
+  // Sync local dark room theme when platform theme changes
+  useEffect(() => {
+    setIsDarkTheme(isPlatformDark);
+  }, [isPlatformDark]);
+
+  // Show early termination warning sheet
+  const [showEarlyExitPane, setShowEarlyExitPane] = useState(false);
+
+  // Invoke high-accuracy wall-clock timer hook
+  const {
+    segments,
+    currentSegmentIndex,
+    currentSegment,
+    currentSegmentElapsed,
+    remainingSeconds,
+    isPaused,
+    startTimer,
+    pauseTimer,
+    skipSegment,
+  } = useFocusTimer({
+    durationMinutes,
+    breakMinutes,
+    numBreaks,
+    onComplete,
+  });
 
   const totalSegmentSeconds = currentSegment.durationSeconds;
-  const remainingSeconds = Math.max(0, totalSegmentSeconds - segmentElapsed);
-  
-  const rafRef = useRef<number | null>(null);
-  const lastTickRef = useRef<number>(Date.now());
-
-  // Countdown clock tick
-  useEffect(() => {
-    if (isPaused) {
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
-      }
-      return;
-    }
-
-    lastTickRef.current = Date.now();
-    
-    const tick = () => {
-      const now = Date.now();
-      const delta = now - lastTickRef.current;
-      
-      if (delta >= 1000) {
-        setSegmentElapsed(prev => {
-          const next = prev + Math.floor(delta / 1000);
-          lastTickRef.current = now - (delta % 1000); // preserve fractional offsets
-          
-          if (next >= totalSegmentSeconds) {
-            // Segment finished!
-            audioEngine.playBell();
-            
-            if (currentSegmentIndex < segments.length - 1) {
-              // Transition to next segment
-              setCurrentSegmentIndex(prevIndex => prevIndex + 1);
-              return 0;
-            } else {
-              // All segments finished!
-              confetti({
-                particleCount: 120,
-                spread: 80,
-                origin: { y: 0.6 }
-              });
-              onComplete();
-              return totalSegmentSeconds;
-            }
-          }
-          return next;
-        });
-      }
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    
-    rafRef.current = requestAnimationFrame(tick);
-
-    return () => {
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-      }
-    };
-  }, [isPaused, currentSegmentIndex, totalSegmentSeconds, segments.length, onComplete]);
-
-  const togglePause = () => {
-    setIsPaused(!isPaused);
-  };
-
-  const handleSkipSegment = () => {
-    audioEngine.playBell();
-    if (currentSegmentIndex < segments.length - 1) {
-      setCurrentSegmentIndex(prev => prev + 1);
-      setSegmentElapsed(0);
-    } else {
-      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-      onComplete();
-    }
-  };
-
-  const handleAddBrainDump = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!brainDumpText.trim()) return;
-    addBrainDump({
-      id: crypto.randomUUID(),
-      text: brainDumpText.trim(),
-      createdAt: Date.now()
-    });
-    setBrainDumpText('');
-  };
-
-  const isWarning = currentSegment.type === 'focus' && remainingSeconds <= 60 && !isPaused;
-  const progress = Math.max(0, remainingSeconds / totalSegmentSeconds);
+  const progressRatio = totalSegmentSeconds > 0 ? (remainingSeconds / totalSegmentSeconds) : 0;
   
   const mins = Math.max(0, Math.floor(remainingSeconds / 60));
   const secs = Math.max(0, remainingSeconds % 60);
 
-  // Minimized bubble widget for multitasking support
+  // Keyboard Shortcuts Handler: space to pause/resume, escape for brain dump
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept when typing in a textarea/input
+      if (document.activeElement?.tagName === 'TEXTAREA' || document.activeElement?.tagName === 'INPUT') {
+        return;
+      }
+      
+      if (e.key === ' ') {
+        e.preventDefault();
+        if (isPaused) {
+          startTimer();
+        } else {
+          pauseTimer();
+        }
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        setShowBrainDump(prev => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isPaused, startTimer, pauseTimer]);
+
+  const handleAddBrainDump = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!brainDumpText.trim()) return;
+    
+    const dumpId = crypto.randomUUID();
+    const newDump = {
+      id: dumpId,
+      text: brainDumpText.trim(),
+      createdAt: Date.now(),
+    };
+
+    // 1. Write locally
+    addBrainDump(newDump);
+    setBrainDumpText('');
+
+    // 2. Write to Firestore globally (not nested in sessionId!)
+    try {
+      await saveBrainDumpToFirestore('', newDump);
+    } catch (err) {
+      console.warn('Silent local dump fallback cached: ', err);
+    }
+  };
+
+  const handleDeleteBrainDump = async (dumpId: string) => {
+    removeBrainDump(dumpId);
+    try {
+       await deleteBrainDumpFromFirestore('', dumpId);
+    } catch (err) {
+       console.error(err);
+    }
+  };
+
+  const handleEndSessionClick = () => {
+    pauseTimer();
+    setShowEarlyExitPane(true);
+  };
+
+  const handleResumeClick = () => {
+    setShowEarlyExitPane(false);
+    startTimer();
+  };
+
+  const isActiveFocus = currentSegment.type === 'focus';
+
+  // Minimized bubble widget that is fully draggable to avoid overlapping!
   if (isMinimized) {
+    const isThemeLight = theme === 'light' || theme === 'sepia' || theme === 'lavender' || theme === 'sage';
     return (
       <motion.div 
-        initial={{ opacity: 0, y: 50, scale: 0.95 }} 
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        className="fixed bottom-6 right-6 z-[100] bg-surface-1/95 border border-border shadow-2 rounded-2xl p-4 pr-16 flex items-center gap-4 cursor-pointer hover:border-accent/40 transition-all backdrop-blur-md max-w-sm select-none"
-        onClick={(e) => {
-           const target = e.target as HTMLElement;
-           if (!target.closest('button')) {
-               setIsMinimized(false);
-           }
+        key="minimized-timer-overlay"
+        initial={{ opacity: 0, scale: 0.95 }} 
+        animate={{ opacity: 1, scale: 1 }}
+        drag
+        dragMomentum={false}
+        dragElastic={0.15}
+        onDragStart={() => {
+          hasDraggedRef.current = true;
         }}
+        onDragEnd={() => {
+          setTimeout(() => {
+            hasDraggedRef.current = false;
+          }, 100);
+        }}
+        onClick={(e) => {
+          if (hasDraggedRef.current) return;
+          const target = e.target as HTMLElement;
+          if (!target.closest('button')) {
+             setIsMinimized(false);
+          }
+        }}
+        className={`fixed bottom-6 right-6 z-[100] border shadow-2xl rounded-2xl p-4 pr-16 flex items-center gap-4 cursor-move active:cursor-grabbing hover:border-accent/40 hover:shadow-accent/5 transition-all backdrop-blur-md max-w-sm select-none ${
+          isThemeLight 
+            ? 'bg-white border-stone-200 text-zinc-900 shadow-stone-200/50' 
+            : 'bg-zinc-950 border-zinc-800 text-white shadow-black/80'
+        }`}
+        title="Drag anywhere on your screen to move player!"
       >
          <div className="relative w-12 h-12 flex items-center justify-center flex-shrink-0">
              <svg className="absolute inset-0 w-full h-full -rotate-90">
-                <circle cx="50%" cy="50%" r="20" fill="none" stroke="var(--color-surface-2)" strokeWidth="3" />
-                <circle cx="50%" cy="50%" r="20" fill="none" stroke={currentSegment.type === 'break' ? 'var(--color-success)' : 'var(--color-accent)'} strokeWidth="3" strokeDasharray={20*2*Math.PI} strokeDashoffset={(20*2*Math.PI) - progress*(20*2*Math.PI)} className="transition-all duration-1000 ease-linear" />
+                <circle cx="50%" cy="50%" r="20" fill="none" stroke={isThemeLight ? '#e5e7eb' : '#27272a'} strokeWidth="3" />
+                <circle cx="50%" cy="50%" r="20" fill="none" stroke={currentSegment.type === 'break' ? '#10b981' : 'var(--color-accent)'} strokeWidth="3" strokeDasharray={20*2*Math.PI} strokeDashoffset={(20*2*Math.PI) - progressRatio*(20*2*Math.PI)} className="transition-all duration-1000 ease-linear" />
              </svg>
-             <span className="text-[10px] font-mono font-bold text-text-primary z-10">{mins}:{String(secs).padStart(2,'0')}</span>
+             <span className={`text-[10px] font-mono font-bold z-10 ${isThemeLight ? 'text-zinc-900' : 'text-white'}`}>{mins}:{String(secs).padStart(2,'0')}</span>
          </div>
          
-         <div className="flex flex-col gap-0.5 min-w-0 pr-2">
-            <span className="text-sm font-bold text-text-primary leading-tight truncate">{intention || sessionType}</span>
-            <span className="text-xs text-text-muted leading-tight">
+         <div className="flex flex-col gap-0.5 min-w-0 pr-2 pointer-events-none">
+            <span className={`text-sm font-bold leading-tight truncate ${isThemeLight ? 'text-zinc-900' : 'text-white'}`}>{intention || sessionType}</span>
+            <span className={`text-xs leading-tight ${isThemeLight ? 'text-zinc-500' : 'text-zinc-400'}`}>
               {currentSegment.type === 'break' ? `Break (${currentSegment.indexInType}/${currentSegment.totalOfType})` : `Focus (${currentSegment.indexInType}/${currentSegment.totalOfType})`}
             </span>
          </div>
          
          <button 
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
-              togglePause();
+              if (isPaused) startTimer(); else pauseTimer();
             }} 
-            className="absolute right-4 w-9 h-12 bg-surface-2 hover:bg-surface-3 rounded-full flex items-center justify-center text-text-primary hover:text-accent transition-all cursor-pointer shadow-sm border border-border/40 hover:scale-105"
+            className={`absolute right-4 w-9 h-9 border rounded-full flex items-center justify-center transition-all cursor-pointer shadow-sm hover:scale-105 ${
+              isThemeLight 
+                ? 'bg-stone-50 border-stone-200 hover:bg-stone-100 text-zinc-900 hover:text-accent' 
+                : 'bg-zinc-900 border-zinc-800 hover:bg-zinc-850 text-white hover:text-accent'
+            }`}
             title={isPaused ? 'Resume' : 'Pause'}
          >
-            {isPaused ? <Play size={12} className="fill-current text-text-primary" /> : <Pause size={12} className="fill-current text-text-primary" />}
+            {isPaused ? <Play size={12} className={`fill-current ${isThemeLight ? 'text-zinc-900' : 'text-white'}`} /> : <Pause size={12} className={`fill-current ${isThemeLight ? 'text-zinc-900' : 'text-white'}`} />}
          </button>
          
          <button 
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               setIsMinimized(false);
             }} 
-            className="absolute -top-2.5 -right-2.5 w-7 h-7 bg-surface-1 border border-border shadow-md rounded-full flex items-center justify-center text-text-muted hover:text-text-primary hover:scale-110 transition-all cursor-pointer"
-            title="Expand"
+            className={`absolute -top-2.5 -right-2.5 w-7 h-7 border shadow-md rounded-full flex items-center justify-center hover:scale-110 transition-all cursor-pointer ${
+              isThemeLight 
+                ? 'bg-stone-50 border-stone-200 text-zinc-500 hover:text-zinc-900 shadow-stone-200/55' 
+                : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white shadow-black/60'
+            }`}
+            title="Expand Room"
          >
             <Maximize2 size={12} />
          </button>
@@ -235,130 +234,174 @@ export default function TimerOverlay({
     );
   }
 
-  const circleRadius = 135;
-  const circumference = circleRadius * 2 * Math.PI;
-  const strokeDashoffset = circumference - progress * circumference;
+  // Dumps are completely global and disconnected from individual sessions (meaning lists persist!).
+  const filteredDumps = brainDumps || [];
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }} 
-      animate={{ opacity: 1 }} 
-      exit={{ opacity: 0 }}
-      className={`fixed inset-0 z-[100] flex flex-col items-center justify-center transition-colors duration-1000 ${
-        currentSegment.type === 'break' 
-          ? 'bg-gradient-to-b from-success/5 to-bg/98' 
-          : 'bg-gradient-to-b from-accent/5 via-bg/99 to-bg/98'
-      } backdrop-blur-xl`}
-    >
-      {/* Top Banner & Control Rail */}
-      <button 
-        onClick={() => setIsMinimized(true)} 
-        className="absolute top-8 right-8 text-text-muted hover:text-text-primary p-3 bg-surface-1 border border-border rounded-xl transition-all shadow-1 hover:scale-105"
-        title="Minimize to Widget"
+    <div key="maximized-container" className="fixed inset-0 z-[100]">
+      <motion.div 
+        key="maximized-full-screen-timer"
+        initial={{ opacity: 0, x: 0, y: 0 }} 
+        animate={{ opacity: 1, x: 0, y: 0 }} 
+        exit={{ opacity: 0 }}
+        className={`w-full h-full flex flex-col items-center justify-center overflow-hidden font-sans transition-colors duration-500 ${
+          isDarkTheme ? 'bg-zinc-950 text-white' : 'bg-stone-50 text-zinc-900'
+        }`}
       >
-         <Minimize2 size={20} />
-      </button>
-
-      <div className="absolute top-12 text-center flex flex-col items-center select-none">
-        <span className="text-text-muted text-[11px] font-bold tracking-widest uppercase mb-2">
-          {sessionType}
+      {/* Subtle Background Ambience Blur Grid */}
+      <div className={`absolute inset-0 pointer-events-none z-0 transition-opacity duration-500 ${
+        isDarkTheme 
+          ? 'bg-[radial-gradient(circle_at_center,rgba(24,24,27,0.5)_0%,rgba(9,9,11,1)_100%)]' 
+          : 'bg-[radial-gradient(circle_at_center,rgba(245,245,244,0.6)_0%,rgba(250,250,249,1)_100%)]'
+      }`} />
+      
+      {/* Top Controls Bar */}
+      <div className="absolute top-8 left-8 right-8 flex justify-between items-center z-10 select-none">
+        <span className={`font-mono text-xs flex items-center gap-2 transition-colors ${
+          isDarkTheme ? 'text-zinc-500' : 'text-zinc-400'
+        }`}>
+          <span className={`w-2.5 h-2.5 rounded-full ${isActiveFocus ? 'bg-accent shadow-[0_0_10px_var(--color-accent)]' : 'bg-emerald-500 shadow-[0_0_10px_#10b981]'}`} />
+          {isActiveFocus ? 'Deep Mode Active' : 'Rest Mode Active'}
         </span>
         
-        {/* Segment Steps Progression Dots */}
-        <div className="flex items-center gap-1.5 mt-1 bg-surface-2/40 px-3 py-1.5 rounded-full border border-border/40">
-           {segments.map((seg, idx) => {
-             const isCurrent = idx === currentSegmentIndex;
-             const isPassed = idx < currentSegmentIndex;
-             return (
-               <div 
-                 key={idx} 
-                 className={`h-2.5 rounded-full transition-all duration-500 ${
-                   isCurrent 
-                     ? (seg.type === 'break' ? 'w-6 bg-success' : 'w-6 bg-accent') 
-                     : (isPassed ? 'w-2.5 bg-text-muted/65' : 'w-2.5 bg-surface-3')
-                 }`}
-                 title={`${seg.type === 'break' ? 'Break' : 'Focus'} Block ${seg.indexInType}/${seg.totalOfType}`}
-               />
-             );
-           })}
-        </div>
-      </div>
-
-      {/* Main Clock Circle Indicator */}
-      <div className="relative flex flex-col items-center justify-center mb-6 w-[340px] h-[340px]">
-        <svg className="absolute inset-0 w-full h-full -rotate-90">
-           <circle
-             cx="50%" cy="50%" r={circleRadius}
-             fill="none"
-             stroke="var(--color-surface-2)"
-             strokeWidth="3.5"
-             className="opacity-40"
-           />
-           <circle
-             cx="50%" cy="50%" r={circleRadius}
-             fill="none"
-             stroke={
-               currentSegment.type === 'break' 
-                 ? 'var(--color-success)' 
-                 : (isWarning ? 'var(--color-warning)' : 'var(--color-accent)')
-             }
-             strokeWidth="4"
-             strokeDasharray={circumference}
-             strokeDashoffset={strokeDashoffset}
-             className="transition-all duration-1000 ease-linear"
-             strokeLinecap="round"
-           />
-        </svg>
-
-        <div className="text-center z-10 select-none">
-          {/* Action description inside circle */}
-          <span className={`text-[10px] font-extrabold tracking-widest uppercase block mb-1 ${
-            currentSegment.type === 'break' ? 'text-success animate-pulse' : 'text-accent'
-          }`}>
-            {currentSegment.type === 'break' ? 'Rest in Progress' : `Session Sprint ${currentSegment.indexInType}/${currentSegment.totalOfType}`}
-          </span>
-          
-          <div 
-            className={`text-[84px] font-mono leading-none tracking-[0.03em] font-medium text-text-primary ${
-              !isPaused && isWarning ? 'animate-pulse text-warning' : ''
-            } ${isPaused ? 'opacity-40' : ''}`} 
-            style={{ fontVariantNumeric: 'tabular-nums' }}
+        <div className="flex items-center gap-3">
+          {/* Theme switcher */}
+          <button 
+            type="button"
+            onClick={() => setIsDarkTheme(prev => !prev)}
+            className={`p-2 border rounded-xl transition-all shadow-xl hover:scale-105 cursor-pointer flex items-center justify-center ${
+              isDarkTheme 
+                ? 'text-zinc-400 hover:text-white border-zinc-900 bg-zinc-900/40 hover:bg-zinc-900' 
+                : 'text-zinc-600 hover:text-zinc-950 border-stone-200 bg-white hover:bg-stone-100 shadow-sm'
+            }`}
+            title={isDarkTheme ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           >
-            {String(mins).padStart(2, '0')}:{String(secs).padStart(2, '0')}
-          </div>
-          
-          <span className="text-[11px] text-text-muted font-bold block mt-3 font-mono">
-            {isPaused ? 'Paused' : `${currentSegment.type === 'break' ? 'Relax & Breathe' : 'Distraction-Free Focus'}`}
-          </span>
+             {isDarkTheme ? <Sun size={15} /> : <Moon size={15} />}
+          </button>
+
+          {/* Minimize element */}
+          <button 
+            type="button"
+            onClick={() => setIsMinimized(true)} 
+            className={`p-2 border rounded-xl transition-all shadow-xl hover:scale-105 cursor-pointer flex items-center justify-center ${
+              isDarkTheme 
+                ? 'text-zinc-400 hover:text-white border-zinc-900 bg-zinc-900/40 hover:bg-zinc-900' 
+                : 'text-zinc-600 hover:text-zinc-950 border-stone-200 bg-white hover:bg-stone-100 shadow-sm'
+            }`}
+            title="Minimize to Floating Player"
+          >
+             <Minimize2 size={15} />
+          </button>
         </div>
       </div>
 
-      {/* Linked Task Context Header */}
-      <div className="text-center max-w-lg px-6 mb-12 select-none">
-        {linkedName && (
-           <h3 className="text-xs font-bold text-text-muted mb-2 tracking-wider uppercase">Linked task</h3>
-        )}
-        {linkedName && (
-           <p className="text-sm font-semibold text-text-secondary bg-surface-2/30 px-3 py-1.5 rounded-lg border border-border/40 inline-block mb-3 max-w-md truncate">{linkedName}</p>
-        )}
-        {intention && (
-           <p className="text-lg font-bold text-text-primary leading-snug tracking-tight">“ {intention} ”</p>
-        )}
-      </div>
+      {/* Primary Layout Frame */}
+      <div className="max-w-2xl w-full flex flex-col items-center justify-center px-6 text-center z-10 select-none">
+        
+        {/* Session Segment Indicators (Dashes) */}
+        <div className={`flex items-center gap-1.5 mb-8 px-4 py-2 rounded-full border transition-colors ${
+          isDarkTheme ? 'bg-zinc-900/40 border-zinc-900' : 'bg-stone-200/50 border-stone-200'
+        }`}>
+          {segments.map((seg, idx) => {
+            const isCurrent = idx === currentSegmentIndex;
+            const isPassed = idx < currentSegmentIndex;
+            return (
+              <div
+                key={idx}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  isCurrent 
+                    ? (seg.type === 'break' ? 'w-8 bg-emerald-500' : 'w-8 bg-accent') 
+                    : (isPassed ? (isDarkTheme ? 'w-3 bg-zinc-605 bg-zinc-600' : 'w-3 bg-stone-400') : (isDarkTheme ? 'w-3 bg-zinc-800' : 'w-3 bg-stone-200'))
+                }`}
+                title={`${seg.type === 'break' ? 'Break' : 'Focus'} Block ${seg.indexInType}/${seg.totalOfType}`}
+              />
+            );
+          })}
+        </div>
 
-      {/* Floating Brain Dump Panel */}
-      {showBrainDump && (
+        {/* Minimal Category indicator */}
+        <span className={`font-mono text-xs uppercase tracking-widest font-extrabold mb-1 transition-colors ${
+          isDarkTheme ? 'text-zinc-400' : 'text-zinc-500'
+        }`}>
+          {sessionType}
+        </span>
+
+        {/* Big Luxury Display Number Timer */}
+        <div 
+          className={`text-[120px] md:text-[144px] font-mono leading-none tracking-tight font-extralight transition-all duration-300 my-3 ${
+            isPaused ? 'opacity-35' : ''
+          } ${isDarkTheme ? 'text-white' : 'text-zinc-900'}`}
+          style={{ fontVariantNumeric: 'tabular-nums' }}
+        >
+          {String(mins).padStart(2, '0')}:{String(secs).padStart(2, '0')}
+        </div>
+
+        {/* Status Text Block */}
+        <span className={`text-xs uppercase tracking-wider font-extrabold block mb-6 transition-colors ${
+          isActiveFocus ? (isDarkTheme ? 'text-accent/80' : 'text-accent/95 font-bold') : 'text-emerald-500'
+        }`}>
+          {isActiveFocus ? 'Distraction-Free Focus block' : 'Relax & Breathe'}
+        </span>
+
+        {/* Single Thin Progressive Bar */}
+        <div className={`w-full max-w-md h-1.5 rounded-full overflow-hidden border mb-10 transition-colors ${
+          isDarkTheme ? 'bg-zinc-900 border-zinc-850/20' : 'bg-stone-200 border-stone-300/20'
+        }`}>
           <motion.div 
-            initial={{ opacity: 0, x: -20, scale: 0.95 }} 
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            className="absolute left-8 bottom-8 w-[350px] bg-surface-1 border border-border p-5 rounded-2xl shadow-2 max-h-[80vh] flex flex-col z-[110]"
+            initial={{ width: '100%' }}
+            animate={{ width: `${progressRatio * 100}%` }}
+            transition={{ ease: 'linear', duration: 1 }}
+            className={`h-full ${isActiveFocus ? 'bg-accent' : 'bg-emerald-500'}`}
+          />
+        </div>
+
+        {/* Context Goal Description */}
+        <div className={`w-full max-w-md mb-12 select-text transition-colors ${
+          isDarkTheme ? 'text-stone-300' : 'text-stone-750'
+        }`}>
+          {linkedName && (
+             <span className={`text-[10px] uppercase font-mono tracking-widest font-bold block mb-1 ${
+               isDarkTheme ? 'text-zinc-500' : 'text-stone-400'
+             }`}>Linked target</span>
+          )}
+          {linkedName && (
+             <span className={`text-sm font-semibold px-2.5 py-1 rounded inline-block mb-3 truncate max-w-sm transition-colors ${
+               isDarkTheme ? 'text-stone-300 bg-zinc-900/60 border-zinc-800' : 'text-stone-700 bg-stone-200/50 border-stone-250'
+             }`}>{linkedName}</span>
+          )}
+          {intention && (
+             <p className={`text-lg font-medium leading-normal italic transition-colors ${
+               isDarkTheme ? 'text-stone-200' : 'text-stone-850'
+             }`}>“ {intention} ”</p>
+          )}
+        </div>
+      </div>
+
+      {/* Floating sliding Compartment for Brain Dumps (Distractions) */}
+      <AnimatePresence>
+        {showBrainDump && (
+          <motion.div 
+            initial={{ opacity: 0, y: 100 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 100 }}
+            className={`fixed bottom-32 left-6 right-6 md:left-auto md:right-8 md:w-[380px] p-6 rounded-2xl shadow-2xl flex flex-col z-[110] border transition-colors duration-300 ${
+              isDarkTheme ? 'bg-zinc-950 border-zinc-850' : 'bg-white border-stone-250'
+            }`}
           >
-             <div className="flex justify-between items-center mb-3 flex-shrink-0">
+             <div className="flex justify-between items-center mb-4 flex-shrink-0 select-none">
                <div>
-                 <h4 className="text-xs font-bold text-text-primary uppercase tracking-wider">Brain Dump Compartment</h4>
-                 <p className="text-[10px] text-text-muted">Empty distractions immediately to focus better.</p>
+                 <h4 className={`text-sm font-extrabold uppercase tracking-wider ${
+                   isDarkTheme ? 'text-white' : 'text-zinc-900'
+                 }`}>Brain Dump Compartment</h4>
+                 <p className={`text-[10px] ${isDarkTheme ? 'text-zinc-400' : 'text-stone-500'}`}>Empty distractions and protect your ongoing focus block.</p>
                </div>
-               <button onClick={() => setShowBrainDump(false)} className="p-1.5 text-text-muted hover:text-text-primary hover:bg-surface-2 rounded-lg transition-colors">
+               <button 
+                 type="button"
+                 onClick={() => setShowBrainDump(false)} 
+                 className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                   isDarkTheme ? 'text-zinc-400 hover:text-white hover:bg-zinc-900' : 'text-zinc-500 hover:text-zinc-950 hover:bg-stone-100'
+                 }`}
+               >
                  <X size={14} />
                </button>
              </div>
@@ -367,79 +410,181 @@ export default function TimerOverlay({
                <textarea 
                  value={brainDumpText}
                  onChange={e => setBrainDumpText(e.target.value)}
-                 placeholder="Drop any distracting thought popping up (e.g., 'Check mail', 'Buy groceries')..."
-                 className="w-full h-24 bg-surface-2 border border-border rounded-xl p-3 text-xs text-text-primary placeholder-text-muted/70 focus:outline-none focus:border-accent resize-none shadow-inner"
+                 placeholder="Drop any distraction here immediately (e.g. 'check text message', 'wash mugs')..."
+                 className={`w-full h-20 rounded-xl p-3 text-xs resize-none shadow-inner border transition-all focus:outline-none focus:border-accent ${
+                   isDarkTheme ? 'bg-zinc-900 border-zinc-805 text-white placeholder-zinc-500' : 'bg-stone-50 border-stone-200 text-stone-900 placeholder-stone-400'
+                 }`}
                />
                <button 
                  type="submit" 
                  disabled={!brainDumpText.trim()}
-                 className="w-full py-2 bg-surface-2 hover:bg-surface-3 border border-border rounded-lg text-xs font-bold text-text-primary transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:scale-[1.01]"
+                 className={`w-full py-2 rounded-lg text-xs font-bold transition-all disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer border ${
+                   isDarkTheme ? 'bg-zinc-90 w-full h-9 bg-zinc-800 hover:bg-zinc-750 border-zinc-700 text-white' : 'bg-zinc-905 bg-stone-900 text-white hover:bg-stone-850 border-stone-900'
+                 }`}
                >
                  Unload Distraction
                </button>
              </form>
              
-             {/* Saved distraction logger right inside screen */}
-             <div className="border-t border-border/60 pt-3 flex-1 overflow-y-auto">
-               <span className="text-[10px] uppercase font-bold text-text-muted tracking-widest block mb-1.5">Captured thoughts ({brainDumps?.length || 0})</span>
-               <div className="space-y-1.5 max-h-[220px] overflow-y-auto pr-1">
-                 {brainDumps?.map((dump) => (
-                   <div key={dump.id} className="flex justify-between items-start group bg-surface-2/40 border border-border/40 rounded-lg px-2.5 py-2 gap-2 text-[11px] hover:border-border transition-colors">
-                     <span className="text-text-secondary leading-normal break-words flex-1 font-medium">{dump.text}</span>
-                     <button onClick={() => removeBrainDump(dump.id)} className="p-1 text-text-muted hover:text-danger rounded transition-colors" title="Delete thought">
+             {/* Saved distractions logged inside actual panel */}
+             <div className={`border-t pt-3 flex-1 overflow-y-auto max-h-[160px] ${
+               isDarkTheme ? 'border-zinc-855 border-zinc-900' : 'border-stone-200'
+             }`}>
+               <span className={`text-[10px] uppercase font-mono font-bold tracking-widest block mb-1.5 ${
+                 isDarkTheme ? 'text-zinc-500' : 'text-stone-400'
+               }`}>Saved Brain Dumps ({filteredDumps.length})</span>
+               
+               <div className="space-y-1.5 pr-1">
+                 {filteredDumps.map((dump) => (
+                   <div 
+                     key={dump.id} 
+                     className={`flex justify-between items-start border rounded-lg px-2.5 py-2 gap-2 text-[11px] transition-colors ${
+                       isDarkTheme ? 'bg-zinc-900/40 border-zinc-850 hover:border-zinc-800' : 'bg-stone-50 border-stone-200 hover:border-stone-250 text-zinc-900'
+                     }`}
+                   >
+                     <div className="flex-1 min-w-0 text-left">
+                       <span className={`leading-normal block break-all font-medium ${isDarkTheme ? 'text-zinc-300' : 'text-stone-700'}`}>{dump.text}</span>
+                       <span className={`text-[9px] font-mono mt-1 block select-none ${isDarkTheme ? 'text-zinc-500' : 'text-stone-400'}`}>
+                         {new Date(dump.createdAt || Date.now()).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                       </span>
+                     </div>
+                     <button 
+                       type="button"
+                       onClick={() => handleDeleteBrainDump(dump.id)} 
+                       className={`p-1 rounded transition-colors cursor-pointer ${
+                         isDarkTheme ? 'text-zinc-500 hover:text-red-400' : 'text-zinc-400 hover:text-red-500 hover:bg-stone-100'
+                       }`} 
+                       title="Delete thought"
+                     >
                        <Trash2 size={12} />
                      </button>
                    </div>
                  ))}
-                 {(!brainDumps || brainDumps.length === 0) && (
-                   <span className="text-xs text-text-muted italic block py-4 text-center">Your mind is perfectly clear.</span>
+                 {filteredDumps.length === 0 && (
+                   <span className="text-xs text-zinc-500 italic block py-2 text-center select-none">Your mind is perfectly clean as of now.</span>
                  )}
                </div>
              </div>
+             <span className={`text-[9px] text-center block mt-3 select-none ${
+               isDarkTheme ? 'text-zinc-650 text-zinc-650' : 'text-stone-400'
+             }`}>Press <kbd className={`px-1 py-0.5 rounded border font-mono ${
+               isDarkTheme ? 'bg-zinc-900 border-zinc-800 text-zinc-400' : 'bg-stone-100 border-stone-200 text-stone-600'
+             }`}>Esc</kbd> to toggle panel</span>
           </motion.div>
-      )}
+        )}
+      </AnimatePresence>
 
-      {/* Control Actions Panel */}
-      <div className={`absolute bottom-16 flex items-center gap-6 transition-transform ${showBrainDump ? 'translate-x-12' : ''} select-none`}>
-        {/* Toggle Brain Dump Button */}
-        <button 
-          onClick={() => setShowBrainDump(!showBrainDump)} 
-          className={`w-12 h-12 rounded-full border flex items-center justify-center transition-all hover:scale-105 shadow-sm cursor-pointer ${
-            showBrainDump 
-              ? 'bg-accent/15 border-accent text-accent' 
-              : 'bg-surface-1 border-border text-text-muted hover:text-text-primary hover:bg-surface-2'
-          }`} 
-          title="Brain Dump"
-        >
-          <Edit3 size={16} />
-        </button>
-        
-        {/* Terminate Early */}
-        <button 
-          onClick={onCancel} 
-          className="text-xs uppercase tracking-widest font-extrabold text-text-muted hover:text-danger hover:underline transition-colors px-4 py-3 cursor-pointer"
-        >
-          Absolve Early
-        </button>
-        
-        {/* Play / Break Controller */}
-        <button 
-          onClick={togglePause} 
-          className="px-8 py-3.5 rounded-full text-xs uppercase tracking-widest font-extrabold bg-surface-1 text-text-primary border border-border/80 hover:bg-surface-2 transition-all shadow-md flex items-center justify-center min-w-[160px] hover:scale-105 cursor-pointer active:scale-95"
-        >
-          {isPaused ? <Play size={12} className="mr-2 fill-current" /> : <Pause size={12} className="mr-2 fill-current" />}
-          {isPaused ? 'Resume Loop' : 'Freeze Time'}
-        </button>
-        
-        {/* Skip Sprint / Segment */}
-        <button 
-          onClick={handleSkipSegment} 
-          className="text-xs uppercase tracking-widest font-extrabold text-text-muted hover:text-text-primary hover:underline transition-colors px-4 py-3 cursor-pointer flex items-center gap-1"
-          title="Skip to Next Segment"
-        >
-          Skip segment <ChevronRight size={14} />
-        </button>
+      {/* Primary Actions Deck */}
+      <div className="absolute bottom-16 flex items-center gap-6 z-10 select-none">
+        {remainingSeconds === 0 ? (
+          <button 
+            type="button"
+            onClick={onComplete}
+            className={`px-12 py-4 rounded-full text-xs uppercase tracking-widest font-extrabold transition-all shadow-2xl flex items-center justify-center min-w-[240px] hover:scale-105 cursor-pointer active:scale-95 bg-emerald-500 hover:bg-emerald-600 text-white border-none`}
+          >
+            Mark Complete
+          </button>
+        ) : (
+          <>
+            {/* Unload Braindump trigger */}
+            <button 
+              type="button"
+              onClick={() => setShowBrainDump(!showBrainDump)} 
+              className={`w-12 h-12 rounded-full border flex items-center justify-center transition-all hover:scale-105 shadow-xl cursor-pointer ${
+                showBrainDump 
+                  ? 'bg-accent/15 border-accent text-accent animate-pulse' 
+                  : (isDarkTheme 
+                      ? 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800' 
+                      : 'bg-white border-stone-250 text-stone-500 hover:text-stone-900 hover:bg-stone-100 shadow-sm')
+              }`}
+              title="Brain Dump compartment (Esc)"
+            >
+              <Edit3 size={16} />
+            </button>
+
+            {/* End Session Button Lock */}
+            <button 
+              type="button"
+              onClick={handleEndSessionClick}
+              className={`text-xs uppercase tracking-widest font-extrabold transition-colors px-4 py-3 cursor-pointer ${
+                isDarkTheme ? 'text-zinc-400 hover:text-red-400' : 'text-zinc-500 hover:text-red-500'
+              }`}
+            >
+              End session
+            </button>
+
+            {/* Master Pause / Resume */}
+            <button 
+              type="button"
+              onClick={() => { if (isPaused) startTimer(); else pauseTimer(); }}
+              className={`px-8 py-3.5 rounded-full text-xs uppercase tracking-widest font-extrabold border transition-all shadow-xl flex items-center justify-center min-w-[160px] hover:scale-105 cursor-pointer active:scale-95 ${
+                isDarkTheme 
+                  ? 'bg-zinc-900 text-white border-zinc-800 hover:bg-zinc-800' 
+                  : 'bg-white text-zinc-950 border-stone-200 hover:bg-stone-100 shadow-sm'
+              }`}
+            >
+              {isPaused ? <Play size={12} className="mr-2 fill-current" /> : <Pause size={12} className="mr-2 fill-current" />}
+              {isPaused ? 'Resume' : 'Pause'}
+            </button>
+
+            {/* Skip Sprint Block */}
+            <button 
+              type="button"
+              onClick={skipSegment} 
+              className={`text-xs uppercase tracking-widest font-extrabold px-4 py-3 cursor-pointer flex items-center gap-1 transition-colors ${
+                isDarkTheme ? 'text-stone-400 hover:text-white' : 'text-stone-500 hover:text-stone-950'
+              }`}
+              title="Skip sector"
+            >
+              Skip segment <ChevronRight size={14} />
+            </button>
+          </>
+        )}
       </div>
+
+      {/* Modern bottom early exit sliding sheet */}
+      <AnimatePresence>
+        {showEarlyExitPane && (
+          <motion.div 
+            initial={{ opacity: 0, y: 150 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 150 }}
+            className={`fixed inset-x-0 bottom-0 z-[120] border-t shadow-2xl p-8 flex flex-col items-center justify-center text-center pb-12 select-none ${
+              isDarkTheme ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-stone-200'
+            }`}
+          >
+             <div className="max-w-md w-full flex flex-col items-center">
+                <AlertCircle size={44} className="text-red-500 mb-4 animate-bounce" />
+                <h3 className={`text-xl font-extrabold mb-2 uppercase tracking-wide ${
+                  isDarkTheme ? 'text-white' : 'text-zinc-900'
+                }`}>Session still running</h3>
+                <p className={`text-sm mb-6 max-w-sm ${isDarkTheme ? 'text-zinc-400' : 'text-stone-650'}`}>
+                  You have an active focus session in progress. Progress will not be saved if you leave now.
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-3 w-full animate-fade-in">
+                  <button 
+                    type="button"
+                    onClick={onCancel}
+                    className={`flex-1 py-3 border rounded-xl text-sm font-bold transition-all cursor-pointer active:scale-[0.99] bg-transparent border-transparent hover:bg-stone-100 dark:hover:bg-zinc-900 ${
+                      isDarkTheme ? 'text-zinc-400' : 'text-zinc-500'
+                    }`}
+                  >
+                    End without saving
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={handleResumeClick}
+                    className={`flex-1 py-3 bg-accent text-white rounded-xl text-sm font-bold transition-all shadow-md cursor-pointer hover:opacity-90 active:scale-[0.99]`}
+                  >
+                    Resume session
+                  </button>
+                </div>
+             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
+    </div>
   );
 }

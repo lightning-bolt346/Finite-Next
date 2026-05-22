@@ -39,7 +39,12 @@ export default function BrainDumpWidget() {
       <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1">
         {brainDumps?.map((dump) => (
           <div key={dump.id} className="flex justify-between items-start group bg-surface-2 border border-border/50 rounded-sm px-2 py-1.5 gap-2 text-xs">
-            <span className="text-text-primary leading-snug break-words flex-1">{dump.text}</span>
+            <div className="flex-1 min-w-0">
+              <span className="text-text-primary leading-snug break-words block font-medium">{dump.text}</span>
+              <span className="text-[9px] text-text-muted font-mono mt-0.5 block select-none">
+                {new Date(dump.createdAt || Date.now()).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+              </span>
+            </div>
             <button onClick={() => removeBrainDump(dump.id)} className="opacity-0 group-hover:opacity-100 flex-shrink-0 p-0.5 text-text-muted hover:text-danger transition-opacity">
               <X size={12} />
             </button>

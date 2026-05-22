@@ -38,12 +38,14 @@ export interface BrainDump {
   id: string;
   text: string;
   createdAt: number;
+  sessionId?: string;
 }
 
 export interface FocusSession {
   id: string;
   title?: string;
   outcome?: string;
+  rating?: number;
   durationMinutes: number;
   date: string;
   createdAt: number;
@@ -143,10 +145,14 @@ interface AppState {
 
   focusSessions: FocusSession[];
   addFocusSession: (session: FocusSession) => void;
+  deleteFocusSession: (id: string) => void;
 
   brainDumps: BrainDump[];
   addBrainDump: (dump: BrainDump) => void;
   removeBrainDump: (id: string) => void;
+
+  activeFocusSessionId: string | null;
+  setActiveFocusSessionId: (id: string | null) => void;
 
   savedItems: SavedItem[];
   addSavedItem: (item: SavedItem) => void;
@@ -256,10 +262,16 @@ export const useStore = create<AppState>()(
 
       focusSessions: [],
       addFocusSession: (session) => set((state) => ({ focusSessions: [...state.focusSessions, session] })),
+      deleteFocusSession: (id) => set((state) => ({ 
+        focusSessions: state.focusSessions.filter((s) => s.id !== id)
+      })),
 
       brainDumps: [],
       addBrainDump: (dump) => set((state) => ({ brainDumps: [dump, ...state.brainDumps] })),
       removeBrainDump: (id) => set((state) => ({ brainDumps: state.brainDumps.filter((b) => b.id !== id) })),
+
+      activeFocusSessionId: null,
+      setActiveFocusSessionId: (id) => set({ activeFocusSessionId: id }),
 
       savedItems: [],
       addSavedItem: (item) => set((state) => ({ savedItems: [...state.savedItems, item] })),
@@ -279,6 +291,11 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'finite-storage', // local storage key
+      partialize: (state) => {
+        // Exclude activeFocusSessionId from persisting so page reloads don't trap users
+        const { activeFocusSessionId, ...rest } = state;
+        return rest;
+      },
     }
   )
 );
