@@ -2,16 +2,59 @@
 
 import { useTasks, Task } from '../../lib/contexts/TaskContext';
 import { useStore } from '../../lib/store';
-import { Flame, Clock } from 'lucide-react';
+import { saveTodayGoalToFirestore } from '../../lib/firebaseSync';
+import { Flame, Clock, Check } from 'lucide-react';
 import { differenceInDays, isSameDay, parseISO, subDays } from 'date-fns';
 import { useState, useEffect } from 'react';
 
 export default function DailyCommandSidebar() {
   const { tasks, intention, setIntention } = useTasks();
-  const { focusSessions } = useStore();
+  const { focusSessions, todayGoals, setTodayGoal } = useStore();
 
   const [timeLeftStr, setTimeLeftStr] = useState('');
   const [isAfter6PM, setIsAfter6PM] = useState(false);
+
+  const todayDate = new Date().toLocaleDateString('en-CA');
+  const todayGoal = todayGoals[todayDate] && !todayGoals[todayDate].archived ? todayGoals[todayDate] : null;
+
+  const [inputValue, setInputValue] = useState('');
+
+  // Hydrate inputValue from todayGoal title or fallback to context intention
+  useEffect(() => {
+    setInputValue(todayGoal ? todayGoal.title : intention || '');
+  }, [todayGoal, intention]);
+
+  const handleIntentionChange = (text: string) => {
+    setInputValue(text);
+    setIntention(text);
+
+    if (text.trim()) {
+      if (!todayGoal) {
+        const newGoal = {
+          id: crypto.randomUUID(),
+          title: text.trim(),
+          doneText: 'Definition of done',
+          priority: 'Normal' as const,
+          minutes: 60,
+          completed: false,
+          date: todayDate,
+          createdAt: Date.now()
+        };
+        setTodayGoal(todayDate, newGoal);
+        saveTodayGoalToFirestore(newGoal);
+      } else {
+        const updated = { ...todayGoal, title: text.trim() };
+        setTodayGoal(todayDate, updated);
+        saveTodayGoalToFirestore(updated);
+      }
+    } else {
+      if (todayGoal) {
+        const updated = { ...todayGoal, title: '', archived: true };
+        setTodayGoal(todayDate, updated);
+        saveTodayGoalToFirestore(updated);
+      }
+    }
+  };
 
   useEffect(() => {
     const updateTimeLeft = () => {
@@ -42,7 +85,6 @@ export default function DailyCommandSidebar() {
   const topPriorityTasks = tasks.filter(t => !t.completed).sort((a, b) => b.priority - a.priority).slice(0, 3);
   const slots = [0, 1, 2].map(i => topPriorityTasks[i] || null);
 
-  const todayDate = new Date().toLocaleDateString('en-CA');
   const deadlinesToday = tasks.filter(t => !t.completed && t.deadline?.startsWith(todayDate)).length;
 
   return (
@@ -50,23 +92,66 @@ export default function DailyCommandSidebar() {
       
       {/* Daily Intention */}
       <div className="bg-surface-1 border border-border rounded-xl p-5 shadow-1 group hover:border-accent/40 transition-colors">
-        <textarea 
-          value={intention}
-          onChange={(e) => setIntention(e.target.value)}
-          placeholder="What matters most today?"
-          rows={1}
-          style={{ minHeight: '36px' }}
-          ref={(el) => {
-             if (el) {
-                el.style.height = '36px';
-                const sh = el.scrollHeight;
-                el.style.height = Math.min(sh, 36 * 3) + 'px';
-             }
-          }}
-          className="w-full bg-transparent border-none text-h3 font-semibold text-text-primary focus:outline-none placeholder:text-text-muted transition-all focus:border-l-4 focus:border-accent focus:pl-3 resize-none scrollbar-none"
-        />
-        <div className={`mt-4 text-xs font-bold tracking-tight rounded-full px-3 py-1.5 inline-flex items-center gap-1.5 ${isAfter6PM ? 'bg-warning/20 text-warning' : 'bg-surface-2 text-text-secondary'}`}>
-           <Clock size={12} /> {timeLeftStr}
+        <div className="flex items-start gap-3">
+          <button 
+            onClick={() => {
+              if (todayGoal) {
+                const nextCompleted = !todayGoal.completed;
+                setTodayGoal(todayDate, { completed: nextCompleted });
+                saveTodayGoalToFirestore({ ...todayGoal, completed: nextCompleted });
+              } else if (inputValue.trim()) {
+                const newGoal = {
+                  id: crypto.randomUUID(),
+                  title: inputValue.trim(),
+                  doneText: 'Definition of done',
+                  priority: 'Normal' as const,
+                  minutes: 60,
+                  completed: true,
+                  date: todayDate,
+                  createdAt: Date.now()
+                };
+                setTodayGoal(todayDate, newGoal);
+                saveTodayGoalToFirestore(newGoal);
+              }
+            }}
+            className={`w-6 h-6 rounded-full border-2 transition-all flex-shrink-0 flex items-center justify-center cursor-pointer mt-1 ${
+              todayGoal?.completed 
+                ? 'bg-success border-success text-white' 
+                : 'border-text-muted/60 hover:border-accent'
+            }`}
+          >
+            {todayGoal?.completed && <Check size={14} className="stroke-[3px]" />}
+          </button>
+          
+          <div className="flex-1 min-w-0">
+            <textarea 
+              value={inputValue}
+              onChange={(e) => handleIntentionChange(e.target.value)}
+              placeholder="What matters most today?"
+              rows={1}
+              style={{ minHeight: '36px' }}
+              ref={(el) => {
+                 if (el) {
+                    el.style.height = '36px';
+                    const sh = el.scrollHeight;
+                    el.style.height = Math.min(sh, 36 * 3) + 'px';
+                 }
+              }}
+              className={`w-full bg-transparent border-none text-h3 font-semibold focus:outline-none placeholder:text-text-muted transition-all resize-none scrollbar-none ${
+                todayGoal?.completed ? 'text-text-muted line-through decoration-[2px]' : 'text-text-primary focus:border-l-4 focus:border-accent focus:pl-3'
+              }`}
+            />
+          </div>
+        </div>
+        <div className="flex items-center justify-between mt-4">
+          <div className={`text-xs font-bold tracking-tight rounded-full px-3 py-1.5 inline-flex items-center gap-1.5 ${isAfter6PM ? 'bg-warning/20 text-warning' : 'bg-surface-2 text-text-secondary'}`}>
+             <Clock size={12} /> {timeLeftStr}
+          </div>
+          {todayGoal && (
+            <span className="text-[10px] font-bold text-accent/80 font-mono tracking-wider">
+              {todayGoal.completed ? 'COMPLETED' : 'ACTIVE FOCUS'}
+            </span>
+          )}
         </div>
       </div>
 

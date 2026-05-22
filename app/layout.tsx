@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   title: 'Finite',
   description: 'A thoughtful command center for your life',
   icons: {
-    icon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⏳</text></svg>',
+    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><radialGradient id="ringGrad" cx="50%" cy="50%" r="50%" fx="32%" fy="28%"><stop offset="0%" stop-color="%23ffffff" /><stop offset="25%" stop-color="%23a78bfa" /><stop offset="72%" stop-color="%231a1a1a" /><stop offset="100%" stop-color="%231a1a1a" /></radialGradient></defs><circle cx="50" cy="50" r="48" fill="url(%23ringGrad)" /><circle cx="50" cy="50" r="28" fill="%23050505" fill-opacity="0.85" /></svg>',
   }
 }
 

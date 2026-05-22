@@ -6,6 +6,7 @@ import { X, Cloud, LogOut, Trash2, Calendar } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { auth } from '../lib/firebase';
 import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, User, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { saveUserProfileToFirestore } from '../lib/firebaseSync';
 
 export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
   const { userName, setUserName, birthDate, setBirthDate, clearAll, setUserId, theme, setTheme, setSetupComplete } = useStore();
@@ -15,6 +16,16 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
   const [password, setPassword] = useState('');
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [authLoading, setAuthLoading] = useState(false);
+
+  useEffect(() => {
+    if (auth.currentUser && userName && birthDate) {
+      saveUserProfileToFirestore({
+        userName,
+        birthDate,
+        setupComplete: true
+      });
+    }
+  }, [userName, birthDate]);
 
   useEffect(() => {
     if (isOpen) {

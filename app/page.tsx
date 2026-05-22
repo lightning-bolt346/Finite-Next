@@ -103,6 +103,8 @@ export default function AppMain() {
       setMounted(true);
       if (!setupComplete) {
         setShowLanding(true);
+      } else {
+        setShowLanding(false);
       }
       setTime(new Date());
     }, 0);

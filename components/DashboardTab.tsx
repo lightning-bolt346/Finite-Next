@@ -11,6 +11,7 @@ import PerspectiveCard from './sidebar/PerspectiveCard';
 import WeekendWants from './sidebar/WeekendWants';
 import BrainDumpWidget from './sidebar/BrainDumpWidget';
 import { getQuote } from '../lib/quoteEngine';
+import { useTasks } from '../lib/contexts/TaskContext';
 
 const PROMPTS = [
   "What deserves your attention today?",
@@ -39,10 +40,47 @@ export default function DashboardTab() {
     return () => clearInterval(interval);
   }, []);
 
+  const { tasks } = useTasks();
+
   const activeGoals = goals.filter(g => g.status === 'active');
-  const nextDeadline = activeGoals.find(g => g.targetDate);
   const outcomeCount = goals.filter(g => g.type === 'outcome').length;
   const processCount = goals.filter(g => g.type === 'process').length;
+
+  const closestDeadline = useMemo(() => {
+    const dates: Array<{ title: string; date: Date; type: 'Goal' | 'Task' }> = [];
+
+    // Process goal target dates
+    for (const g of activeGoals) {
+      if (g.targetDate) {
+        try {
+          const parsed = new Date(g.targetDate + 'T23:59:59');
+          if (!isNaN(parsed.getTime())) {
+            dates.push({ title: g.title, date: parsed, type: 'Goal' });
+          }
+        } catch {}
+      }
+    }
+
+    // Process active task deadlines
+    for (const t of tasks) {
+      if (!t.completed && t.deadline) {
+        try {
+          const parsed = new Date(t.deadline);
+          if (!isNaN(parsed.getTime())) {
+            dates.push({ title: t.title, date: parsed, type: 'Task' });
+          }
+        } catch {}
+      }
+    }
+
+    // Sort chronologically and find the first one that is either in the future or active today
+    const nowMs = Date.now() - 2 * 60 * 60 * 1000; // allow a tiny buffer for recent past
+    const upcoming = dates
+      .filter(item => item.date.getTime() >= nowMs)
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+    return upcoming[0] || null;
+  }, [activeGoals, tasks]);
 
   const totalWeeks = 4160;
   const livedWeeks = useMemo(() => {
@@ -259,12 +297,14 @@ export default function DashboardTab() {
             <div className="p-6 bg-surface-1 border border-border hover:bg-surface-2 transition-colors duration-fast rounded-xl">
               <div className="flex justify-between items-start mb-4">
                 <span className="text-micro text-text-muted uppercase tracking-wider">Next deadline</span>
-                <span className="text-micro px-2.5 py-1 border border-border rounded-full text-text-muted whitespace-nowrap">Upcoming</span>
+                <span className="text-micro px-2.5 py-1 border border-border rounded-full text-text-muted whitespace-nowrap">
+                  {closestDeadline ? closestDeadline.type : "Upcoming"}
+                </span>
               </div>
               <div className="text-h3 font-medium tracking-tight mb-2 text-text-primary line-clamp-2">
-                {nextDeadline && nextDeadline.targetDate ? new Date(nextDeadline.targetDate).toLocaleDateString() : "—"}
+                {closestDeadline ? closestDeadline.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "—"}
               </div>
-              <p className="text-sm text-text-muted">{nextDeadline ? nextDeadline.title : "No deadlines yet."}</p>
+              <p className="text-sm text-text-muted">{closestDeadline ? closestDeadline.title : "No deadlines yet."}</p>
             </div>
           </div>
 

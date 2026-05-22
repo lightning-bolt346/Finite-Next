@@ -1,6 +1,6 @@
 'use client';
 
-import { doc, setDoc, deleteDoc, collection, getDocs } from 'firebase/firestore';
+import { doc, setDoc, deleteDoc, collection, getDocs, getDoc } from 'firebase/firestore';
 import { db, auth, firebaseReady } from './firebase';
 
 export enum OperationType {
@@ -293,6 +293,7 @@ export async function loadUserDataFromFirestore(uid: string) {
   if (!firebaseReady) return null;
   try {
     const [
+      userProfileSnap,
       focusSessionsSnap,
       brainDumpsSnap,
       goalsSnap,
@@ -301,6 +302,7 @@ export async function loadUserDataFromFirestore(uid: string) {
       savedItemsSnap,
       todayGoalsSnap,
     ] = await Promise.all([
+      getDoc(doc(db, 'users', uid)),
       getDocs(collection(db, 'users', uid, 'focusSessions')),
       getDocs(collection(db, 'users', uid, 'brainDumps')),
       getDocs(collection(db, 'users', uid, 'goals')),
@@ -310,7 +312,10 @@ export async function loadUserDataFromFirestore(uid: string) {
       getDocs(collection(db, 'users', uid, 'todayGoals')),
     ]);
 
+    const profile = userProfileSnap.exists() ? userProfileSnap.data() : null;
+
     return {
+      profile,
       focusSessions: focusSessionsSnap.docs.map(d => ({ id: d.id, ...d.data() })),
       brainDumps: brainDumpsSnap.docs.map(d => ({ id: d.id, ...d.data() })),
       goals: goalsSnap.docs.map(d => ({ id: d.id, ...d.data() })),
@@ -322,5 +327,27 @@ export async function loadUserDataFromFirestore(uid: string) {
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, `users/${uid}/*`);
     return null;
+  }
+}
+
+export async function saveUserProfileToFirestore(profile: {
+  userName: string;
+  birthDate: string;
+  setupComplete: boolean;
+}) {
+  if (!firebaseReady) return;
+  const user = auth.currentUser;
+  if (!user) return; // Silent fallback for Guest/Offline mode
+
+  const path = `users/${user.uid}`;
+  try {
+    await setDoc(doc(db, 'users', user.uid), {
+      userName: profile.userName,
+      birthDate: profile.birthDate,
+      setupComplete: profile.setupComplete,
+      updatedAt: Date.now()
+    }, { merge: true });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
   }
 }

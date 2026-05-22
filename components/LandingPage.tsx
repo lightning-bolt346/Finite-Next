@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { ArrowRight, Cloud, X } from 'lucide-react';
 import { auth } from '../lib/firebase';
 import { signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { saveUserProfileToFirestore } from '../lib/firebaseSync';
 
 export default function LandingPage({ onComplete }: { onComplete: () => void }) {
   const { setUserName, setBirthDate, setSetupComplete } = useStore();
@@ -20,7 +21,21 @@ export default function LandingPage({ onComplete }: { onComplete: () => void }) 
   const [authLoading, setAuthLoading] = useState(false);
 
   const handleSkip = () => {
+    const finalName = nameInput.trim() || useStore.getState().userName || 'Guest';
+    const finalBirth = birthInput || useStore.getState().birthDate || '1995-01-01';
+
+    // update store
+    setUserName(finalName);
+    setBirthDate(finalBirth);
     setSetupComplete(true);
+
+    // sync to firestore if logged in
+    saveUserProfileToFirestore({
+      userName: finalName,
+      birthDate: finalBirth,
+      setupComplete: true
+    });
+
     onComplete();
   };
 

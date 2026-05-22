@@ -370,6 +370,9 @@ export const useStore = create<AppState>()(
         }
 
         return {
+          userName: data.profile?.userName || state.userName,
+          birthDate: data.profile?.birthDate || state.birthDate,
+          setupComplete: data.profile?.setupComplete !== undefined ? data.profile.setupComplete : state.setupComplete,
           focusSessions: mergeList(state.focusSessions, data.focusSessions),
           brainDumps: mergeList(state.brainDumps, data.brainDumps),
           goals: mergeList(state.goals, data.goals),
